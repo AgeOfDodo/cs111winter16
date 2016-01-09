@@ -97,7 +97,7 @@ main(int argc, char **argv)
             printf("option c with value '%s'\n", optarg);
             //format: --command i o e cmd args_array
             int i,o,e;            //input, output, error  
-            char* cmd = optarg;   //command name
+            char* cmd;   //command name
             size_t args_array_size = 1; 
             char** args_array = malloc(args_array_size*sizeof(char*)); //command argument(s)
             int args_index = 0;    //current index for the above array
@@ -109,9 +109,10 @@ main(int argc, char **argv)
             /**SET UP FD & ARGUMENTS**/
             ///////////////////////////
             //store the file descripter numbers.
-            i = atoi(argv[index]); index++;
+            i = atoi(optarg); 
             o = atoi(argv[index]); index++;
             e = atoi(argv[index]); index++;
+            cmd = argv[index]; index++;
 
             //store arguments of the command into an array of char**
             while(index < argc){
@@ -140,6 +141,7 @@ main(int argc, char **argv)
             // blah. 
 
 
+            free(args_array);
         
             break;
 
@@ -172,6 +174,5 @@ main(int argc, char **argv)
     	fd_array_cur--;
     }
     free(fd_array);
-    free(args_array);
    exit(EXIT_SUCCESS);
 }
