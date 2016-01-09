@@ -62,6 +62,7 @@ main(int argc, char **argv)
     size_t fd_array_size = 2;
     int fd_array_cur = 0;
     int * fd_array = malloc(fd_array_size*sizeof(int));
+    int oflag;
 
     // Parse options
    while (1) {
@@ -85,32 +86,24 @@ main(int argc, char **argv)
        switch (c) {
        // read only
        case 'r':
-            printf("option r with value '%s'\n", optarg);
-            int read_fd = open(optarg, O_RDONLY);
-            if(checkOpenError(read_fd) == -1) 
-              continue;
-            if (fd_array_cur == fd_array_size) {
-            	fd_array_size *= 2;
-            	fd_array = (int*)realloc((void*)fd_array, fd_array_size); 
-            }
-            fd_array[fd_array_cur] = read_fd;
-            fd_array_cur++;
-            printf("read_fd = %d\n", read_fd);
-            break;
        // write only
-       case 'w':
-            printf("option w with value '%s'\n", optarg);
-            int write_fd = open(optarg, O_WRONLY);  
-            if(checkOpenError(read_fd) == -1) 
+       case 'w':   		
+       		if (c == 'r') 	oflag = O_RDONLY;
+       		else 			oflag = O_WRONLY;
+
+            printf("option %c with value '%s'\n", c, optarg);
+            int rw_fd = open(optarg, oflag);
+            if(checkOpenError(rw_fd) == -1) 
               continue;
             if (fd_array_cur == fd_array_size) {
             	fd_array_size *= 2;
             	fd_array = (int*)realloc((void*)fd_array, fd_array_size); 
             }
-            fd_array[fd_array_cur] = write_fd;
+            fd_array[fd_array_cur] = rw_fd;
             fd_array_cur++;
-            printf("write_fd = %d\n", write_fd);
+            printf("rw_fd = %d\n", rw_fd);
             break;
+            
         // command. 
        case 'c': 
             printf("option c with value '%s'\n", optarg);
