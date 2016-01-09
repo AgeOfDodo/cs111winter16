@@ -25,6 +25,13 @@
 //
 //
 //////////////////////////////////////////////////////////////////////////////////////
+int validFd(int fd, int fd_array_cur){
+	if( fd >= fd_array_cur){	
+  		fprintf(stderr, "Invalid use of file descriptor %d before initiation.\n", fd);
+  		return 0;
+  	}
+  	return 1;
+}
 
 int checkOpenError(int fd) {
 	if (fd == -1) {
@@ -164,6 +171,9 @@ main(int argc, char **argv)
             /////////////////////////
             //TODO: fork() ==> let child process execute the command.
             // blah. 
+
+            //check if i,o,e fd are valid 
+            if(!(validFd(i,fd_array_cur) && validFd(o,fd_array_cur) && validFd(e,fd_array_cur)))	continue;
 
             int pid = fork();
             if(pid == 0){   //child process
