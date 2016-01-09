@@ -1,4 +1,7 @@
-//lab1 Cristen, Sunnie CS111 Winter 2016
+/* CS111 Winter 2016 Lab1  
+   partners: Cristen Anderson <UID>
+             Sunnie So  <704430286>
+ */
 
 //In Lab 1a, you'll warm up by implementing just the options --rdonly, --wronly, --command, and --verbose.
 #include <stdio.h>
@@ -8,8 +11,8 @@
 #include <fcntl.h>
 
 /////// TO DO ///////////////////////////////////////////////////////////////
-// CHECK OPEN ERROR AND EXIT LOOP DON'T STORE FILE DESCRIPTOR IN ARRAY IF ITS -1
-// FREE!!!!! memory from malloc
+// done - CHECK OPEN ERROR AND EXIT LOOP DON'T STORE FILE DESCRIPTOR IN ARRAY IF ITS -1
+// done - FREE!!!!! memory from malloc
 //
 //
 //
@@ -22,10 +25,12 @@
 //
 //////////////////////////////////////////////////////////////////////////////////////
 
-void checkOpenError(int fd) {
+int checkOpenError(int fd) {
 	if (fd == -1) {
 		fprintf(stderr, "open returned unsuccessfully\n");
-	}
+    return -1;
+  }
+  return 0;
 }
 
 int
@@ -63,7 +68,8 @@ main(int argc, char **argv)
        case 'r':
             printf("option r with value '%s'\n", optarg);
             int read_fd = open(optarg, O_RDONLY);
-            checkOpenError(read_fd);
+            if(checkOpenError(read_fd) == -1) 
+              continue;
             if (fd_array_cur == fd_array_size) {
             	fd_array_size *= 2;
             	fd_array = (int*)realloc((void*)fd_array, fd_array_size); 
@@ -75,8 +81,9 @@ main(int argc, char **argv)
        // write only
        case 'w':
             printf("option w with value '%s'\n", optarg);
-            int write_fd = open(optarg, O_WRONLY);
-            checkOpenError(write_fd);
+            int write_fd = open(optarg, O_WRONLY);  
+            if(checkOpenError(read_fd) == -1) 
+              continue;
             if (fd_array_cur == fd_array_size) {
             	fd_array_size *= 2;
             	fd_array = (int*)realloc((void*)fd_array, fd_array_size); 
@@ -85,10 +92,53 @@ main(int argc, char **argv)
             fd_array_cur++;
             printf("write_fd = %d\n", write_fd);
             break;
-        // command
-       case 'c':
+        // command. 
+       case 'c': 
             printf("option c with value '%s'\n", optarg);
+            //format: --command i o e cmd args_array
+            int i,o,e;            //input, output, error  
+            char* cmd = optarg;   //command name
+            size_t args_array_size = 1; 
+            char** args_array = malloc(args_array_size*sizeof(char*)); //command argument(s)
+            int args_index = 0;    //current index for the above array
+
+
+            int index = optind; //current element from argv.
+
+            /////////////////////////// 
+            /**SET UP FD & ARGUMENTS**/
+            ///////////////////////////
+            //store the file descripter numbers.
+            i = atoi(argv[index]); index++;
+            o = atoi(argv[index]); index++;
+            e = atoi(argv[index]); index++;
+
+            //store arguments of the command into an array of char**
+            while(index < argc){
+              //break the loop if the index reaches the next "--"option
+              if(argv[index][0] == '-' && argv[index][1] == '-')
+                break;
+              //now this must be an argument for the command. Store it into args array
+              //realloc: same mechanics as fd_array
+              if(args_index == args_array_size){
+                args_array_size *= 2;
+                args_array = (char**)realloc((void*)args_array, args_array_size); 
+              }
+              args_array[args_index] = argv[index];
+              printf("args_array[%d] = %s\n", args_index, argv[index]);
+              args_index++;
+              index++;
+            }
+            //set optind to the next in argv (next option)
+            optind = index;
+            printf("--command %d %d %d %s\n", i,o,e,cmd);
+
+            ///////////////////////// 
+            /**EXECUTE THE COMMAND**/
+            /////////////////////////
+
             break;
+
        // verbose
        case 'v':
             printf("option v\n");
@@ -117,6 +167,6 @@ main(int argc, char **argv)
     	close(fd_array[fd_array_cur]);
     	fd_array_cur--;
     }
-
+    free(fd_array);
    exit(EXIT_SUCCESS);
 }
