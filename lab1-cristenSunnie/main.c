@@ -10,6 +10,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <ctype.h>
+#include <sys/wait.h>
+#include <sys/types.h>
 
 /////// TO DO ///////////////////////////////////////////////////////////////
 // done - CHECK OPEN ERROR AND EXIT LOOP DON'T STORE FILE DESCRIPTOR IN ARRAY IF ITS -1
@@ -27,7 +29,7 @@
 //////////////////////////////////////////////////////////////////////////////////////
 int validFd(int fd, int fd_array_cur){
 	if( fd >= fd_array_cur){	
-  		fprintf(stderr, "Invalid use of file descriptor %d before initiation.\n", fd);
+  		fprintf(stderr, "Error: Invalid use of file descriptor %d before initiation.\n", fd);
   		return 0;
   	}
   	return 1;
@@ -35,7 +37,7 @@ int validFd(int fd, int fd_array_cur){
 
 int checkOpenError(int fd) {
 	if (fd == -1) {
-		fprintf(stderr, "open returned unsuccessfully\n");
+		fprintf(stderr, "Error: open returned unsuccessfully\n");
     return -1;
   }
   return 0;
@@ -46,14 +48,14 @@ int passChecks(char* str, int index, int num_args) {
   // checks if is a digit
   while (str != NULL && *(str+i) != '\0') {
     if (!isdigit(*(str+i))) {
-      fprintf(stderr, "Incorrect usage of --command. Requires integer argument.\n");
+      fprintf(stderr, "Error: Incorrect usage of --command. Requires integer argument.\n");
       return 0;
     }
     i++;
   }
   // checks if is within number of arguments
   if (index >= num_args) {
-    fprintf(stderr, "Invalid number of arguments for --command\n");
+    fprintf(stderr, "Error: Invalid number of arguments for --command\n");
     return 0;
   }
   return 1;
@@ -98,7 +100,7 @@ main(int argc, char **argv)
        		if (c == 'r') 	oflag = O_RDONLY;
        		else 			oflag = O_WRONLY;
 
-            printf("option %c with value '%s'\n", c, optarg);
+            printf("option %c with value '%s', ", c, optarg);
             int rw_fd = open(optarg, oflag);
             if(checkOpenError(rw_fd) == -1) 
               continue;
@@ -140,7 +142,7 @@ main(int argc, char **argv)
             e = atoi(argv[index]); index++;
 
             if (index >= argc) {
-              fprintf(stderr, "Invalid number of arguments for --command\n");
+              fprintf(stderr, "Error: Invalid number of arguments for --command\n");
               break;
             }
             args_array[0] = argv[index]; index++;
@@ -184,21 +186,25 @@ main(int argc, char **argv)
             if(!(validFd(i,fd_array_cur) && validFd(o,fd_array_cur) && validFd(e,fd_array_cur)))	continue;
 
 
-            int pid = fork();
+            pid_t pid = fork();
+            int status;
             if(pid == 0){   //child process
-              printf("child process\n");
+              printf("Enter child process\n");
               //redirect stdin to i, stdout to o, stderr to e
               dup2(fd_array[i], 0);
               dup2(fd_array[o], 1);
               dup2(fd_array[e], 2);
-              
+
               execvp(args_array[0], args_array);
               //return to main program if execvp fails
-              fprintf(stderr, "Unknown commmand '%s'\n", args_array[0]);
+              fprintf(stderr, "Error: Unknown commmand '%s'\n", args_array[0]);
               exit(255);  
             }else{  //parent process
-              printf("parent process\n");
-              //wait child process to finish.
+              printf("Enter parent process\n");
+              //wait any child process to finish. 0 is for blocking.
+              pid_t returnedPid = waitpid(WAIT_ANY, &status, 0);
+              //WEXITSTATUS returns the exit status of the child.
+              printf("Child exit code: %d\n", WEXITSTATUS(status));
               
             }
             free(args_array);
