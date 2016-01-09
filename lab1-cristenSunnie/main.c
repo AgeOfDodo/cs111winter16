@@ -173,11 +173,12 @@ main(int argc, char **argv)
             int pid = fork();
             if(pid == 0){   //child process
               printf("child process\n");
+              
             }else{  //parent process
               printf("parent process\n");
             }
-
             free(args_array);
+
         
             break;
 
