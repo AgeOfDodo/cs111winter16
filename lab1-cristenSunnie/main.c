@@ -129,18 +129,13 @@ main(int argc, char **argv)
             ///////////////////////////
             //store the file descripter numbers and check for errors
 
-            if (!passChecks(optarg, index, argc)) {
-              break;
-            }
+            if (!passChecks(optarg, index, argc)) { break; }
             i = atoi(optarg);
-            if (!passChecks(argv[index], index, argc)) {
-              break;
-            }
+            
+            if (!passChecks(argv[index], index, argc)) { break; }
             o = atoi(argv[index]); index++;
             
-            if (!passChecks(argv[index], index, argc)) {
-              break;
-            }
+            if (!passChecks(argv[index], index, argc)) { break; }
             e = atoi(argv[index]); index++;
 
             if (index >= argc) {
