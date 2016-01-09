@@ -4,4 +4,12 @@
 #include<unistd.h>
 int main(){
 
+	// rdonly
+
+	// wronly
+
+	// command
+
+	// verbose
+
 }
