@@ -34,6 +34,24 @@ int checkOpenError(int fd) {
   return 0;
 }
 
+int passChecks(char* str, int index, int num_args) {
+  int i = 0;
+  // checks if is a digit
+  while (str != NULL && *str != '\0') {
+    if (!isdigit(*(str+i))) {
+      fprintf(stderr, "Incorrect usage of --command. Requires integer argument.\n");
+      return 0;
+    }
+    i++;
+  }
+  // checks if is within number of arguments
+  if (index >= num_args) {
+    fprintf(stderr, "Invalid number of arguments for --command\n");
+    return 0;
+  }
+  return 1;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -110,26 +128,20 @@ main(int argc, char **argv)
             /**SET UP FD & ARGUMENTS**/
             ///////////////////////////
             //store the file descripter numbers and check for errors
-            if (!isdigit(optarg)) {
-              fprintf(stderr, "Incorrect usage of --command. Requires integer argument.\n");
-            }
-            i = atoi(optarg);
-            
-            if (index >= argc) {
-              fprintf(stderr, "Invalid number of arguments for --command\n");
+
+
+
+            if (!passChecks(optarg, index, argc)) {
               break;
             }
-            if (!isdigit(argv[index])) {
-              fprintf(stderr, "Incorrect usage of --command. Requires integer argument.\n");
+            i = atoi(optarg);
+            if (!passChecks(argv[index], index, argc)) {
+              break;
             }
             o = atoi(argv[index]); index++;
             
-            if (index >= argc) {
-              fprintf(stderr, "Invalid number of arguments for --command\n");
+            if (!passChecks(argv[index], index, argc)) {
               break;
-            }
-            if (!isdigit(argv[index])) {
-              fprintf(stderr, "Incorrect usage of --command. Requires integer argument.\n");
             }
             e = atoi(argv[index]); index++;
 
