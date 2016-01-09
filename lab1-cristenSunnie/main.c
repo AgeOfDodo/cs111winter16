@@ -13,7 +13,7 @@
 /////// TO DO ///////////////////////////////////////////////////////////////
 // done - CHECK OPEN ERROR AND EXIT LOOP DON'T STORE FILE DESCRIPTOR IN ARRAY IF ITS -1
 // done - FREE!!!!! memory from malloc
-//
+// command execution 
 //
 //
 //
@@ -136,7 +136,11 @@ main(int argc, char **argv)
             ///////////////////////// 
             /**EXECUTE THE COMMAND**/
             /////////////////////////
+            //TODO: fork() ==> let child process execute the command.
+            // blah. 
 
+
+        
             break;
 
        // verbose
@@ -168,5 +172,6 @@ main(int argc, char **argv)
     	fd_array_cur--;
     }
     free(fd_array);
+    free(args_array);
    exit(EXIT_SUCCESS);
 }
