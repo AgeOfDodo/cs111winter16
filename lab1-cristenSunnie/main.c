@@ -100,7 +100,7 @@ main(int argc, char **argv)
             char* cmd = optarg;   //command name
             size_t args_array_size = 1; 
             char** args_array = malloc(args_array_size*sizeof(char*)); //command argument(s)
-            int args_index = 0;    //current index for the above array
+            int args_array_cur = 0;    //current index for the above array
 
 
             int index = optind; //current element from argv.
@@ -120,13 +120,13 @@ main(int argc, char **argv)
                 break;
               //now this must be an argument for the command. Store it into args array
               //realloc: same mechanics as fd_array
-              if(args_index == args_array_size){
+              if(args_array_cur == args_array_size){
                 args_array_size *= 2;
                 args_array = (char**)realloc((void*)args_array, args_array_size); 
               }
-              args_array[args_index] = argv[index];
-              printf("args_array[%d] = %s\n", args_index, argv[index]);
-              args_index++;
+              args_array[args_array_cur] = argv[index];
+              printf("args_array[%d] = %s\n", args_array_cur, argv[index]);
+              args_array_cur++;
               index++;
             }
             //set optind to the next in argv (next option)
