@@ -9,6 +9,7 @@
 #include <getopt.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <ctype.h>
 
 /////// TO DO ///////////////////////////////////////////////////////////////
 // done - CHECK OPEN ERROR AND EXIT LOOP DON'T STORE FILE DESCRIPTOR IN ARRAY IF ITS -1
@@ -108,10 +109,34 @@ main(int argc, char **argv)
             /////////////////////////// 
             /**SET UP FD & ARGUMENTS**/
             ///////////////////////////
-            //store the file descripter numbers.
-            i = atoi(optarg); 
+            //store the file descripter numbers and check for errors
+            if (!isdigit(optarg)) {
+              fprintf(stderr, "Incorrect usage of --command. Requires integer argument.\n");
+            }
+            i = atoi(optarg);
+            
+            if (index >= argc) {
+              fprintf(stderr, "Invalid number of arguments for --command\n");
+              break;
+            }
+            if (!isdigit(argv[index])) {
+              fprintf(stderr, "Incorrect usage of --command. Requires integer argument.\n");
+            }
             o = atoi(argv[index]); index++;
+            
+            if (index >= argc) {
+              fprintf(stderr, "Invalid number of arguments for --command\n");
+              break;
+            }
+            if (!isdigit(argv[index])) {
+              fprintf(stderr, "Incorrect usage of --command. Requires integer argument.\n");
+            }
             e = atoi(argv[index]); index++;
+
+            if (index >= argc) {
+              fprintf(stderr, "Invalid number of arguments for --command\n");
+              break;
+            }
             cmd = argv[index]; index++;
 
             //store arguments of the command into an array of char**
