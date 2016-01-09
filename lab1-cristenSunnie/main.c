@@ -158,7 +158,7 @@ main(int argc, char **argv)
               //realloc: same mechanics as fd_array
               if(args_array_cur == args_array_size){
                 args_array_size *= 2;
-                args_array = (char**)realloc((void*)args_array, args_array_size); 
+                args_array = (char**)realloc((void*)args_array, args_array_size*sizeof(char*)); 
               }
               args_array[args_array_cur] = argv[index];
               printf("args_array[%d] = %s\n", args_array_cur, argv[index]);
