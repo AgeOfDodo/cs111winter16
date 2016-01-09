@@ -37,7 +37,7 @@ int checkOpenError(int fd) {
 int passChecks(char* str, int index, int num_args) {
   int i = 0;
   // checks if is a digit
-  while (str != NULL && *str != '\0') {
+  while (str != NULL && *(str+i) != '\0') {
     if (!isdigit(*(str+i))) {
       fprintf(stderr, "Incorrect usage of --command. Requires integer argument.\n");
       return 0;
@@ -117,7 +117,7 @@ main(int argc, char **argv)
             //format: --command i o e cmd args_array
             int i,o,e;            //input, output, error  
             char* cmd;   //command name
-            size_t args_array_size = 1; 
+            size_t args_array_size = 2; 
             char** args_array = malloc(args_array_size*sizeof(char*)); //command argument(s)
             int args_array_cur = 0;    //current index for the above array
 
@@ -128,8 +128,6 @@ main(int argc, char **argv)
             /**SET UP FD & ARGUMENTS**/
             ///////////////////////////
             //store the file descripter numbers and check for errors
-
-
 
             if (!passChecks(optarg, index, argc)) {
               break;
