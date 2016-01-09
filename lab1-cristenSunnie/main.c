@@ -162,6 +162,16 @@ main(int argc, char **argv)
               args_array_cur++;
               index++;
             }
+
+            //append NULL to args_array (necessary for execvp())
+            if(args_array_cur == args_array_size){
+                args_array_size++;
+                args_array = (char**)realloc((void*)args_array, args_array_size*sizeof(char*)); 
+            }
+            args_array[args_array_cur] = NULL;
+            printf("args_array[%d] = %s\n", args_array_cur, argv[index]);
+            args_array_cur++;
+
             //set optind to the next in argv (next option)
             optind = index;
             printf("--command %d %d %d %s\n", i,o,e,args_array[0]);
@@ -169,11 +179,10 @@ main(int argc, char **argv)
             ///////////////////////// 
             /**EXECUTE THE COMMAND**/
             /////////////////////////
-            //TODO: fork() ==> let child process execute the command.
-            // blah. 
 
             //check if i,o,e fd are valid 
             if(!(validFd(i,fd_array_cur) && validFd(o,fd_array_cur) && validFd(e,fd_array_cur)))	continue;
+
 
             int pid = fork();
             if(pid == 0){   //child process
