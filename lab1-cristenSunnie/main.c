@@ -113,7 +113,7 @@ main(int argc, char **argv)
             
         // command. 
        case 'c': 
-            printf("option c with value '%s'\n", optarg);
+            printf("option c (command)\n");
             //format: --command i o e cmd args_array
             int i,o,e;            //input, output, error  
 
@@ -187,6 +187,11 @@ main(int argc, char **argv)
             int pid = fork();
             if(pid == 0){   //child process
               printf("child process\n");
+              //redirect stdin to i, stdout to o, stderr to e
+              dup2(fd_array[i], 0);
+              dup2(fd_array[o], 1);
+              dup2(fd_array[e], 2);
+              
               execvp(args_array[0], args_array);
               //return to main program if execvp fails
               fprintf(stderr, "Unknown commmand '%s'\n", args_array[0]);
