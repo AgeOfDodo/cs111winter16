@@ -116,7 +116,8 @@ main(int argc, char **argv)
             printf("option c with value '%s'\n", optarg);
             //format: --command i o e cmd args_array
             int i,o,e;            //input, output, error  
-            char* cmd;   //command name
+
+            // args_array will store command and its arguments
             size_t args_array_size = 2; 
             char** args_array = malloc(args_array_size*sizeof(char*)); //command argument(s)
             int args_array_cur = 0;    //current index for the above array
@@ -142,7 +143,8 @@ main(int argc, char **argv)
               fprintf(stderr, "Invalid number of arguments for --command\n");
               break;
             }
-            cmd = argv[index]; index++;
+            args_array[0] = argv[index]; index++;
+            args_array_cur++;
 
             //store arguments of the command into an array of char**
             while(index < argc){
@@ -162,7 +164,7 @@ main(int argc, char **argv)
             }
             //set optind to the next in argv (next option)
             optind = index;
-            printf("--command %d %d %d %s\n", i,o,e,cmd);
+            printf("--command %d %d %d %s\n", i,o,e,args_array[0]);
 
             ///////////////////////// 
             /**EXECUTE THE COMMAND**/
