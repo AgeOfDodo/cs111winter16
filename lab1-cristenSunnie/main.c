@@ -175,9 +175,14 @@ main(int argc, char **argv)
             int pid = fork();
             if(pid == 0){   //child process
               printf("child process\n");
-              
+              execvp(args_array[0], args_array);
+              //return to main program if execvp fails
+              fprintf(stderr, "Unknown commmand '%s'\n", args_array[0]);
+              exit(255);  
             }else{  //parent process
               printf("parent process\n");
+              //wait child process to finish.
+              
             }
             free(args_array);
 
