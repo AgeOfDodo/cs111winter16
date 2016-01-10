@@ -74,11 +74,11 @@ main(int argc, char **argv)
    while (1) {
         int option_index = 0;
         static struct option long_options[] = {
-        	// { "name", has_arg, *flag, val }
-            {"rdonly",     required_argument, 0,  'r' },
-            {"wronly",  required_argument,  0,  'w' },
-            {"command",  required_argument, 0,  'c' },
-            {"verbose", no_argument, 0, 'v' },
+        	// { "name",      has_arg,         *flag, val }
+            {"rdonly",      required_argument,  0,  'r' },
+            {"wronly",      required_argument,  0,  'w' },
+            {"command",     required_argument,  0,  'c' },
+            {"verbose",     no_argument,        0,  'v' },
         };
 
         // get the next option

@@ -13,7 +13,9 @@ submission_files = README main.c Makefile test.sh
 lab1-CristenAnderson_SunnieSo.tar.gz: $(submission_files)
 	tar -czf $@ $(submission_files) 
 
-#check:
+check: 
+	./test.sh
+
 
 clean:
 	rm -f *.o *.tar.gz 
