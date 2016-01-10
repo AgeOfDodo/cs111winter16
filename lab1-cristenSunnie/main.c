@@ -14,17 +14,12 @@
 #include <sys/types.h>
 
 /////// TO DO ///////////////////////////////////////////////////////////////
-// done - CHECK OPEN ERROR AND EXIT LOOP DON'T STORE FILE DESCRIPTOR IN ARRAY IF ITS -1
-// done - FREE!!!!! memory from malloc
-// command execution 
+// implement verbose
+// update README
+// update test.sh with test cases
+// use make check
 //
-//
-//
-//
-//
-//
-//
-//
+// 
 //
 //////////////////////////////////////////////////////////////////////////////////////
 int validFd(int fd, int fd_array_cur){
