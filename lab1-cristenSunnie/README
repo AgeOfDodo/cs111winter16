@@ -1,3 +1,17 @@
 README
 
-hi.
+CS 111 Operating Systems Principles, Winter 2016
+Cristen Anderson <904400797> and Sunnie So <704430286>
+
+Lab 1
+
+This submission is for lab 1a, which is the first part of lab 1.
+
+It can be built using make, and run using ./main.o 
+
+We have implemented the --wronly, --rdonly, --command, and 
+--verbose flags using the appropriate commands as outlined
+in the specification on the class website.
+
+Our testing is in test.sh.
+

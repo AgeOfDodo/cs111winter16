@@ -1,6 +1,5 @@
 /* CS111 Winter 2016 Lab1  
-   partners: Cristen Anderson <UID>
-             Sunnie So  <704430286>
+See README for further information
  */
 
 //In Lab 1a, you'll warm up by implementing just the options --rdonly, --wronly, --command, and --verbose.
