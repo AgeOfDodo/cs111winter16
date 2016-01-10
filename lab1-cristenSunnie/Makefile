@@ -16,4 +16,4 @@ lab1-CristenAnderson_SunnieSo.tar.gz: $(submission_files)
 #check:
 
 clean:
-	rm -f *.o *.so *.so.* *.tar.gz 
+	rm -f *.o *.tar.gz 
