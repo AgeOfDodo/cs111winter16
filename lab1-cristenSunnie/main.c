@@ -17,7 +17,9 @@ See README for further information
 // update README
 // update test.sh with test cases
 // use make check
-//
+// exit status = sum of exit statuses of subcommands that ran and waited for
+// check if multiple arguments for read/write
+// use argv for verbose? just print out from a beginning of option index to the end.
 // 
 //
 //////////////////////////////////////////////////////////////////////////////////////
@@ -66,6 +68,7 @@ main(int argc, char **argv)
     int fd_array_cur = 0;
     int * fd_array = malloc(fd_array_size*sizeof(int));
     int oflag;
+    int verbose = 0;
 
     // Parse options
    while (1) {
@@ -93,8 +96,13 @@ main(int argc, char **argv)
        case 'w':   		
        		if (c == 'r') 	oflag = O_RDONLY;
        		else 			oflag = O_WRONLY;
-
-            printf("option %c with value '%s', ", c, optarg);
+            // if (verbose) {
+            //   char * flags;
+            //   if (c == 'r') { flags == "--rdonly"; } 
+            //   else { flags = "--wronly"; }
+            //   printf("%s %s", flags, optarg);
+            // }
+            
             int rw_fd = open(optarg, oflag);
             if(checkOpenError(rw_fd) == -1) 
               continue;
@@ -209,6 +217,7 @@ main(int argc, char **argv)
        // verbose
        case 'v':
             printf("option v\n");
+            verbose = 1;
             break;
        // ? returns when doesn't recognize option character
        case '?':
