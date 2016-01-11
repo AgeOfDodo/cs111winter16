@@ -228,7 +228,6 @@ main(int argc, char **argv)
 
        // verbose
        case 'v':
-            printf("--verbose\n");
             verbose = 1;
             break;
         // WAIT (need to update to wait for ALL, not ANY)
