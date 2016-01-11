@@ -62,12 +62,15 @@ diff -u $a $b > /dev/null
 success "--command: execute simple command 'cat' "
 
 # clean useless content
-> $b
-> $c
+> "$b"
+> "$c"
 
 ./simpsh --rdonly $a --rdonly $b --wronly $c --command 0 1 2 cat -
 cat $c | grep "Bad file descriptor" > /dev/null
 success "--rdonly: Error on writing to read_only file"
+
+./simpsh --command 0 1 2 echo "hi" 2>&1 | grep "initiation" > /dev/null
+success "--command: report uninitialized file descriptor"
 
 ./simpsh --rdonly $a --wronly $b --wronly $c --command 0 1 cat - 2>&1 | grep "Error: Incorrect usage of --command. Requires integer argument." > /dev/null
 success "--command: report none digit file descriptor"
