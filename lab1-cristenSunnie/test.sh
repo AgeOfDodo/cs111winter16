@@ -9,14 +9,16 @@
 success()
 {
 	if [ $? -ne 0 ]; then
-		echo "FAIL case: $1"
+		echo "FAIL: $1"
+		exit 1
 	fi
 }
 
 failure()
 {
 	if [ $? -eq 0 ]; then
-		echo "FAIL case: $1"; #exit(1)
+		echo "FAIL: $1"; 
+		exit 1
 	fi
 }
 
@@ -25,6 +27,8 @@ failure()
 a=$(mktemp /tmp/a.XXXXXXXXXX) || exit 1
 b=$(mktemp /tmp/b.XXXXXXXXXX) || exit 1
 c=$(mktemp /tmp/c.XXXXXXXXXX) || exit 1
+d=$(mktemp /tmp/d.XXXXXXXXXX) || exit 1
+
 
 # for lab 1a
 echo "hello from file a" > $a
@@ -42,22 +46,34 @@ success "--wronly: report invalid filename"
 failure "--wronly: open valid file"
 
 # --command
-./simpsh --rdonly $a --wronly $b --wronly $c --command 0 1 2 cat - | diff $a $b > /dev/null
-success "--command: execute simple command cat"
 
-./simpsh --rdonly $a --wronly $b --wronly $c --command 0 1 2 3 cat - | cat $c | grep "Error: Unknown command" > /dev/null
-success "--command: report invalid number of arguments"
+# bug
+./simpsh --rdonly $a --wronly $b --wronly $c --command 0 1 2 cat - > /dev/null
+diff -u $a $b 
+success "--command: execute simple command 'cat' "
+
+# ./simpsh --rdonly $a --wronly $b --wronly $c --command 0 1 2 3 cat - | cat $c | grep "Error: Unknown command" > /dev/null
+# success "--command: report invalid number of arguments"
 
 ./simpsh --rdonly $a --wronly $b --wronly $c --command 0 1 cat - 2>&1 | grep "Error: Incorrect usage of --command. Requires integer argument." > /dev/null
 success "--command: report none digit file descripter"
 
 # --verbose
-./simpsh --verbose --rdonly $a --wronly $b --wronly $c --command 0 1 2 cat - | diff - <(echo $'--verbose\n--rdonly $a\n--wronly $b\n--wronly $c\n--command 0 1 2 cat -\n') > /dev/null
-#success "--verbose: valid output when verbose is in the beginning"
+# bug
+./simpsh --verbose --rdonly $a --wronly $b --wronly $c --command 0 1 2 cat - > $d
+diff <(cat $d) <(echo $'--verbose\n--rdonly $a\n--wronly $b\n--wronly $c\n--command 0 1 2 cat -\n') > /dev/null
+success "--verbose: valid output when verbose is in the beginning"
+
+# bug
+#success "--verbose: valid output when verbose is in the middle of arguments"
+
+
 
 
 # delete temp files
 rm "$a"
 rm "$b"
 rm "$c"
+
+exit 0
 
