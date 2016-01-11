@@ -54,11 +54,20 @@ success "--wronly: report invalid filename"
 ./simpsh --wronly $a 2>&1 | grep "Error: open returned unsuccessfully" > /dev/null
 failure "--wronly: open valid file"
 
+
 # --command
 
 ./simpsh --rdonly $a --wronly $b --wronly $c --command 0 1 2 cat - 
 diff -u $a $b > /dev/null
 success "--command: execute simple command 'cat' "
+
+# clean useless content
+> $b
+> $c
+
+./simpsh --rdonly $a --rdonly $b --wronly $c --command 0 1 2 cat -
+cat $c | grep "Bad file descriptor" > /dev/null
+success "--rdonly: Error on writing to read_only file"
 
 ./simpsh --rdonly $a --wronly $b --wronly $c --command 0 1 cat - 2>&1 | grep "Error: Incorrect usage of --command. Requires integer argument." > /dev/null
 success "--command: report none digit file descriptor"
@@ -69,6 +78,7 @@ success "--command: report invalid number of arguments"
 
 ./simpsh --command 0 1 2 echo "hi" 2>&1 | grep "Error: Invalid use of file descriptor" > /dev/null
 success "--command: report invalid use of file descriptor"
+
 
 # --verbose
 
