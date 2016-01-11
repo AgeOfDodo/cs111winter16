@@ -23,7 +23,7 @@ failure()
 }
 
 # tmp files
-								# exit if fails to create files
+# exit if fails to create files
 a=/tmp/a || exit 1
 b=/tmp/b || exit 1
 c=/tmp/c || exit 1
@@ -69,6 +69,7 @@ success "--command: report invalid number of arguments"
 
 # --verbose
 # bug
+
 ./simpsh --verbose --rdonly $a --wronly $b --wronly $c --command 0 1 2 cat - > $d
 echo '--rdonly /tmp/a ' > $e
 echo '--wronly /tmp/b ' >> $e
@@ -80,6 +81,7 @@ echo
 echo "e is "
 cat $e
 diff -u $d $e #> /dev/null
+
 #success "--verbose: valid output when verbose is in the beginning"
 
 # make test for verbose in the middle
