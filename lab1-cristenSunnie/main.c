@@ -119,7 +119,7 @@ main(int argc, char **argv)
       size_t args_array_size = 2; 
       char** args_array = malloc(args_array_size*sizeof(char*)); //command argument(s)
       int args_array_cur = 0;    //current index for the above array  
-      int i,o,e; 
+
        switch (c) {
        // read only
        case 'r':
@@ -158,9 +158,9 @@ main(int argc, char **argv)
           break;
             
         // command. 
-       case 'c': 
-        //format: --command i o e cmd args_array
-        //int i, o, e;        //input, output, error  
+       case 'c': {
+          //format: --command i o e cmd args_array
+        int i, o, e;        //input, output, error  
         /////////////////////////// 
         /**SET UP FD & ARGUMENTS**/
         ///////////////////////////
@@ -206,11 +206,10 @@ main(int argc, char **argv)
         /////////////////////////
 
         //check if i,o,e fd are valid 
-        if(!(validFd(i,fd_array_cur) && validFd(o,fd_array_cur) && validFd(e,fd_array_cur)))	continue;
+        if(!(validFd(i,fd_array_cur) && validFd(o,fd_array_cur) && validFd(e,fd_array_cur)))  continue;
 
 
         pid_t pid = fork();
-        int status;
         if(pid == 0){   //child process
           //redirect stdin to i, stdout to o, stderr to e
           dup2(fd_array[i], 0);
@@ -224,13 +223,17 @@ main(int argc, char **argv)
         }
         break;
 
+       }
+        
+
        // verbose
        case 'v':
             printf("--verbose\n");
             verbose = 1;
             break;
         // WAIT (need to update to wait for ALL, not ANY)
-        case 'z':
+        case 'z': {
+          int status;
           //wait any child process to finish. 0 is for blocking.
           pid_t returnedPid = waitpid(WAIT_ANY, &status, 0);
           //WEXITSTATUS returns the exit status of the child.
@@ -244,6 +247,8 @@ main(int argc, char **argv)
           }
           printf("\n");
           break;
+        }
+
 
        // ? returns when doesn't recognize option character
        case '?':
