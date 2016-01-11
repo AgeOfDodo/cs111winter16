@@ -57,6 +57,30 @@ int passChecks(char* str, int index, int num_args) {
   return 1;
 }
 
+int findArgs(char** args_array, size_t args_array_size, 
+              int index, int* args_current,
+              int argc, char** argv) {
+  int args_array_cur = *args_current;
+  //store arguments of the command into an array of char**
+  while(index < argc){
+    //break the loop if the index reaches the next "--"option
+    if(argv[index][0] == '-' && argv[index][1] == '-')
+      break;
+    //now this must be an argument for the command. Store it into args array
+    //realloc: same mechanics as fd_array
+    if(args_array_cur == args_array_size){
+      args_array_size *= 2;
+      args_array = (char**)realloc((void*)args_array, args_array_size*sizeof(char*)); 
+    }
+    args_array[args_array_cur] = argv[index];
+    printf("args_array[%d] = %s\n", args_array_cur, argv[index]);
+    args_array_cur++;
+    index++;
+  }
+  *args_current = args_array_cur;
+  return index;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -125,8 +149,6 @@ main(int argc, char **argv)
             size_t args_array_size = 2; 
             char** args_array = malloc(args_array_size*sizeof(char*)); //command argument(s)
             int args_array_cur = 0;    //current index for the above array
-
-
             int index = optind; //current element from argv.
 
             /////////////////////////// 
@@ -150,23 +172,9 @@ main(int argc, char **argv)
             args_array[0] = argv[index]; index++;
             args_array_cur++;
 
-            //store arguments of the command into an array of char**
-            while(index < argc){
-              //break the loop if the index reaches the next "--"option
-              if(argv[index][0] == '-' && argv[index][1] == '-')
-                break;
-              //now this must be an argument for the command. Store it into args array
-              //realloc: same mechanics as fd_array
-              if(args_array_cur == args_array_size){
-                args_array_size *= 2;
-                args_array = (char**)realloc((void*)args_array, args_array_size*sizeof(char*)); 
-              }
-              args_array[args_array_cur] = argv[index];
-              printf("args_array[%d] = %s\n", args_array_cur, argv[index]);
-              args_array_cur++;
-              index++;
-            }
-
+            index = findArgs(args_array, args_array_size, index, &args_array_cur,
+                              argc, argv);
+            
             //append NULL to args_array (necessary for execvp())
             if(args_array_cur == args_array_size){
                 args_array_size++;
