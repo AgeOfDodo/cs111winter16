@@ -13,13 +13,8 @@ See README for further information
 #include <sys/types.h>
 
 /////// TO DO ///////////////////////////////////////////////////////////////
-// implement verbose
 // update README
 // update test.sh with test cases
-// use make check
-// exit status = sum of exit statuses of subcommands that ran and waited for
-// check if multiple arguments for read/write
-// use argv for verbose? just print out from a beginning of option index to the end.
 // 
 //
 //////////////////////////////////////////////////////////////////////////////////////
@@ -88,6 +83,11 @@ main(int argc, char **argv)
     // c holds return value of getopt_long
     int c;
 
+    // j is an iterator for for loops
+    int j;
+
+    int exit_status = 0;
+
     // Declare array to hold file descriptors
     size_t fd_array_size = 2;
     int fd_array_cur = 0;
@@ -104,6 +104,7 @@ main(int argc, char **argv)
             {"wronly",      required_argument,  0,  'w' },
             {"command",     required_argument,  0,  'c' },
             {"verbose",     no_argument,        0,  'v' },
+            {"wait",        no_argument,        0,  'z'}
         };
 
         // get the next option
@@ -135,7 +136,6 @@ main(int argc, char **argv)
             else { flags = "--wronly"; }
             printf("%s ", flags);
             printf("%s ", optarg);
-            int j;
             for (j = 0; j < args_array_cur; j++) {
               printf("%s ", args_array[j]);
             }
@@ -144,8 +144,11 @@ main(int argc, char **argv)
           
           // read write file descriptor
           int rw_fd = open(optarg, oflag, 777);
-          if(checkOpenError(rw_fd) == -1) 
+          if(checkOpenError(rw_fd) == -1) {
+            exit_status = 1;
             continue;
+          }
+            
           if (fd_array_cur == fd_array_size) {
           	fd_array_size *= 2;
           	fd_array = (int*)realloc((void*)fd_array, fd_array_size); 
@@ -157,8 +160,7 @@ main(int argc, char **argv)
         // command. 
        case 'c': 
         //format: --command i o e cmd args_array
-                   //input, output, error  
-
+        //int i, o, e;        //input, output, error  
         /////////////////////////// 
         /**SET UP FD & ARGUMENTS**/
         ///////////////////////////
@@ -193,7 +195,6 @@ main(int argc, char **argv)
 
         if (verbose == 1) {
           printf("--command %d %d %d ", i,o,e);
-          int j;
           for (j = 0; j < args_array_cur-1; j++) {
             printf("%s ", args_array[j]);
           }
@@ -211,7 +212,6 @@ main(int argc, char **argv)
         pid_t pid = fork();
         int status;
         if(pid == 0){   //child process
-          printf("Enter child process\n");
           //redirect stdin to i, stdout to o, stderr to e
           dup2(fd_array[i], 0);
           dup2(fd_array[o], 1);
@@ -221,13 +221,6 @@ main(int argc, char **argv)
           //return to main program if execvp fails
           fprintf(stderr, "Error: Unknown command '%s'\n", args_array[0]);
           exit(255);  
-        }else{  //parent process
-          printf("Enter parent process\n");
-          //wait any child process to finish. 0 is for blocking.
-          pid_t returnedPid = waitpid(WAIT_ANY, &status, 0);
-          //WEXITSTATUS returns the exit status of the child.
-          printf("Child exit code: %d\n", WEXITSTATUS(status));
-          
         }
         break;
 
@@ -236,6 +229,22 @@ main(int argc, char **argv)
             printf("--verbose\n");
             verbose = 1;
             break;
+        // WAIT (need to update to wait for ALL, not ANY)
+        case 'z':
+          //wait any child process to finish. 0 is for blocking.
+          pid_t returnedPid = waitpid(WAIT_ANY, &status, 0);
+          //WEXITSTATUS returns the exit status of the child.
+          int waitStatus = WEXITSTATUS(status);
+          printf("%d ", waitStatus);
+          if (waitStatus > exit_status) {
+            exit_status = waitStatus;
+          }
+          for (j = 0; j < args_array_cur-1; j++) {
+            printf("%s ", args_array[j]);
+          }
+          printf("\n");
+          break;
+
        // ? returns when doesn't recognize option character
        case '?':
             break;
@@ -247,12 +256,12 @@ main(int argc, char **argv)
     }
 
     // Prints out extra options that weren't parsed
-   if (optind < argc) {
-        printf("non-option ARGV-elements: ");
-        while (optind < argc)
-            printf("%s ", argv[optind++]);
-        printf("\n");
-    }
+   // if (optind < argc) {
+   //      printf("non-option ARGV-elements: ");
+   //      while (optind < argc)
+   //          printf("%s ", argv[optind++]);
+   //      printf("\n");
+   //  }
 
 
     // Close all used file descriptors
@@ -262,5 +271,5 @@ main(int argc, char **argv)
     	fd_array_cur--;
     }
     free(fd_array);
-   exit(EXIT_SUCCESS);
+   exit(exit_status);
 }
