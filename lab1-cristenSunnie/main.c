@@ -218,6 +218,8 @@ main(int argc, char **argv)
 
           execvp(args_array[0], args_array);
           //return to main program if execvp fails
+          //TO CRISTEN from sunnie: I feel like this error should be recorded in the real stderr (2) instead of fd_array[e],
+          //cuz this is an error for the program, not the command itself. If that's the case, then this is a BUG.
           fprintf(stderr, "Error: Unknown command '%s'\n", args_array[0]);
           exit(255);  
         }
@@ -254,7 +256,7 @@ main(int argc, char **argv)
             break;
 
        default:
-            fprintf(stderr, "?? getopt returned character code 0%o ??\n", c);
+            fprintf(stderr, "Error: ?? getopt returned character code 0%o ??\n", c);
         }
         free(args_array);
     }

@@ -61,31 +61,26 @@ diff -u $a $b
 success "--command: execute simple command 'cat' "
 
 ./simpsh --rdonly $a --wronly $b --wronly $c --command 0 1 cat - 2>&1 | grep "Error: Incorrect usage of --command. Requires integer argument." > /dev/null
-success "--command: report none digit file descripter"
+success "--command: report none digit file descriptor"
 
 ./simpsh --rdonly $a --wronly $b --wronly $c --command 0 1 2 3 cat - 2>&1 > /dev/null
 cat $c |grep "Error: Unknown command"  > /dev/null
 success "--command: report invalid number of arguments"
 
+./simpsh --command 0 1 2 echo "hi" 2>&1 | grep "Error: Invalid use of file descriptor" > /dev/null
+success "--command: report invalid use of file descriptor"
+
 # --verbose
-# bug
 
 ./simpsh --verbose --rdonly $a --wronly $b --wronly $c --command 0 1 2 cat - > $d
-echo '--rdonly /tmp/a ' > $e
-echo '--wronly /tmp/b ' >> $e
-echo '--wronly /tmp/c ' >> $e
-echo '--command 0 1 2 cat - ' >> $e
-echo "d is "
-cat $d
-echo
-echo "e is "
-cat $e
-diff -u $d $e #> /dev/null
+echo '--rdonly /tmp/a ' > $e; echo '--wronly /tmp/b ' >> $e; echo '--wronly /tmp/c ' >> $e; echo '--command 0 1 2 cat - ' >> $e
+diff -u $d $e > /dev/null
+success "--verbose: valid output when verbose is in the beginning"
 
-#success "--verbose: valid output when verbose is in the beginning"
-
-# make test for verbose in the middle
-# success "--verbose: valid output when verbose is in the middle of arguments"
+./simpsh --rdonly $a --wronly $b --verbose --wronly $c --command 0 1 2 cat - > $d
+echo '--wronly /tmp/c ' > $e; echo '--command 0 1 2 cat - ' >> $e
+diff -u $d $e > /dev/null
+success "--verbose: valid output when verbose is in the middle of arguments"
 
 
 
