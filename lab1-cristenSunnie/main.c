@@ -64,8 +64,10 @@ int findArgs(char** args_array, size_t args_array_size,
   //store arguments of the command into an array of char**
   while(index < argc){
     //break the loop if the index reaches the next "--"option
-    if(argv[index][0] == '-' && argv[index][1] == '-')
+    if(argv[index][0] == '-' && argv[index][1] == '-') {
       break;
+    }
+      
     //now this must be an argument for the command. Store it into args array
     //realloc: same mechanics as fd_array
     if(args_array_cur == args_array_size){
@@ -73,7 +75,6 @@ int findArgs(char** args_array, size_t args_array_size,
       args_array = (char**)realloc((void*)args_array, args_array_size*sizeof(char*)); 
     }
     args_array[args_array_cur] = argv[index];
-    printf("args_array[%d] = %s\n", args_array_cur, argv[index]);
     args_array_cur++;
     index++;
   }
@@ -113,6 +114,11 @@ main(int argc, char **argv)
        if (c == -1)
             break;
 
+       // args_array will store flag and its arguments
+      size_t args_array_size = 2; 
+      char** args_array = malloc(args_array_size*sizeof(char*)); //command argument(s)
+      int args_array_cur = 0;    //current index for the above array  
+      int i,o,e; 
        switch (c) {
        // read only
        case 'r':
@@ -120,111 +126,112 @@ main(int argc, char **argv)
        case 'w':   		
        		if (c == 'r') 	oflag = O_RDONLY;
        		else 			oflag = O_WRONLY;
-            // if (verbose) {
-            //   char * flags;
-            //   if (c == 'r') { flags == "--rdonly"; } 
-            //   else { flags = "--wronly"; }
-            //   printf("%s %s", flags, optarg);
-            // }
-            
-            int rw_fd = open(optarg, oflag);
-            if(checkOpenError(rw_fd) == -1) 
-              continue;
-            if (fd_array_cur == fd_array_size) {
-            	fd_array_size *= 2;
-            	fd_array = (int*)realloc((void*)fd_array, fd_array_size); 
+          optind = findArgs(args_array, args_array_size, optind, &args_array_cur,
+                            argc, argv);
+
+          if (verbose) {
+            char * flags;
+            if (c == 'r') { flags = "--rdonly"; } 
+            else { flags = "--wronly"; }
+            printf("%s ", flags);
+            printf("%s ", optarg);
+            for (int j = 0; j < args_array_cur; j++) {
+              printf("%s ", args_array[j]);
             }
-            fd_array[fd_array_cur] = rw_fd;
-            fd_array_cur++;
-            printf("rw_fd = %d\n", rw_fd);
-            break;
+            printf("\n");
+          }
+          
+          // read write file descriptor
+          int rw_fd = open(optarg, oflag, 777);
+          if(checkOpenError(rw_fd) == -1) 
+            continue;
+          if (fd_array_cur == fd_array_size) {
+          	fd_array_size *= 2;
+          	fd_array = (int*)realloc((void*)fd_array, fd_array_size); 
+          }
+          fd_array[fd_array_cur] = rw_fd;
+          fd_array_cur++;
+          break;
             
         // command. 
        case 'c': 
-            printf("option c (command)\n");
-            //format: --command i o e cmd args_array
-            int i,o,e;            //input, output, error  
+        //format: --command i o e cmd args_array
+                   //input, output, error  
 
-            // args_array will store command and its arguments
-            size_t args_array_size = 2; 
-            char** args_array = malloc(args_array_size*sizeof(char*)); //command argument(s)
-            int args_array_cur = 0;    //current index for the above array
-            int index = optind; //current element from argv.
+        /////////////////////////// 
+        /**SET UP FD & ARGUMENTS**/
+        ///////////////////////////
+        //store the file descripter numbers and check for errors
 
-            /////////////////////////// 
-            /**SET UP FD & ARGUMENTS**/
-            ///////////////////////////
-            //store the file descripter numbers and check for errors
-
-            if (!passChecks(optarg, index, argc)) { break; }
-            i = atoi(optarg);
-            
-            if (!passChecks(argv[index], index, argc)) { break; }
-            o = atoi(argv[index]); index++;
-            
-            if (!passChecks(argv[index], index, argc)) { break; }
-            e = atoi(argv[index]); index++;
-
-            if (index >= argc) {
-              fprintf(stderr, "Error: Invalid number of arguments for --command\n");
-              break;
-            }
-            args_array[0] = argv[index]; index++;
-            args_array_cur++;
-
-            index = findArgs(args_array, args_array_size, index, &args_array_cur,
-                              argc, argv);
-            
-            //append NULL to args_array (necessary for execvp())
-            if(args_array_cur == args_array_size){
-                args_array_size++;
-                args_array = (char**)realloc((void*)args_array, args_array_size*sizeof(char*)); 
-            }
-            args_array[args_array_cur] = NULL;
-            printf("args_array[%d] = %s\n", args_array_cur, argv[index]);
-            args_array_cur++;
-
-            //set optind to the next in argv (next option)
-            optind = index;
-            printf("--command %d %d %d %s\n", i,o,e,args_array[0]);
-
-            ///////////////////////// 
-            /**EXECUTE THE COMMAND**/
-            /////////////////////////
-
-            //check if i,o,e fd are valid 
-            if(!(validFd(i,fd_array_cur) && validFd(o,fd_array_cur) && validFd(e,fd_array_cur)))	continue;
-
-
-            pid_t pid = fork();
-            int status;
-            if(pid == 0){   //child process
-              printf("Enter child process\n");
-              //redirect stdin to i, stdout to o, stderr to e
-              dup2(fd_array[i], 0);
-              dup2(fd_array[o], 1);
-              dup2(fd_array[e], 2);
-
-              execvp(args_array[0], args_array);
-              //return to main program if execvp fails
-              fprintf(stderr, "Error: Unknown commmand '%s'\n", args_array[0]);
-              exit(255);  
-            }else{  //parent process
-              printf("Enter parent process\n");
-              //wait any child process to finish. 0 is for blocking.
-              pid_t returnedPid = waitpid(WAIT_ANY, &status, 0);
-              //WEXITSTATUS returns the exit status of the child.
-              printf("Child exit code: %d\n", WEXITSTATUS(status));
-              
-            }
-            free(args_array);
-
+        if (!passChecks(optarg, optind, argc)) { break; }
+        i = atoi(optarg);
         
-            break;
+        if (!passChecks(argv[optind], optind, argc)) { break; }
+        o = atoi(argv[optind]); optind++;
+        
+        if (!passChecks(argv[optind], optind, argc)) { break; }
+        e = atoi(argv[optind]); optind++;
+
+        if (optind >= argc) {
+          fprintf(stderr, "Error: Invalid number of arguments for --command\n");
+          break;
+        }
+        args_array[0] = argv[optind]; optind++;
+        args_array_cur++;
+
+        optind = findArgs(args_array, args_array_size, optind, &args_array_cur,
+                          argc, argv);
+        
+        //append NULL to args_array (necessary for execvp())
+        if(args_array_cur == args_array_size){
+            args_array_size++;
+            args_array = (char**)realloc((void*)args_array, args_array_size*sizeof(char*)); 
+        }
+        args_array[args_array_cur] = NULL;
+        args_array_cur++;
+
+        if (verbose == 1) {
+          printf("--command %d %d %d ", i,o,e);
+          for (int j = 0; j < args_array_cur-1; j++) {
+            printf("%s ", args_array[j]);
+          }
+          printf("\n");
+        }
+
+        ///////////////////////// 
+        /**EXECUTE THE COMMAND**/
+        /////////////////////////
+
+        //check if i,o,e fd are valid 
+        if(!(validFd(i,fd_array_cur) && validFd(o,fd_array_cur) && validFd(e,fd_array_cur)))	continue;
+
+
+        pid_t pid = fork();
+        int status;
+        if(pid == 0){   //child process
+          printf("Enter child process\n");
+          //redirect stdin to i, stdout to o, stderr to e
+          dup2(fd_array[i], 0);
+          dup2(fd_array[o], 1);
+          dup2(fd_array[e], 2);
+
+          execvp(args_array[0], args_array);
+          //return to main program if execvp fails
+          fprintf(stderr, "Error: Unknown commmand '%s'\n", args_array[0]);
+          exit(255);  
+        }else{  //parent process
+          printf("Enter parent process\n");
+          //wait any child process to finish. 0 is for blocking.
+          pid_t returnedPid = waitpid(WAIT_ANY, &status, 0);
+          //WEXITSTATUS returns the exit status of the child.
+          printf("Child exit code: %d\n", WEXITSTATUS(status));
+          
+        }
+        break;
 
        // verbose
        case 'v':
-            printf("option v\n");
+            printf("--verbose\n");
             verbose = 1;
             break;
        // ? returns when doesn't recognize option character
@@ -232,8 +239,9 @@ main(int argc, char **argv)
             break;
 
        default:
-            printf("?? getopt returned character code 0%o ??\n", c);
+            fprintf(stderr, "?? getopt returned character code 0%o ??\n", c);
         }
+        free(args_array);
     }
 
     // Prints out extra options that weren't parsed
