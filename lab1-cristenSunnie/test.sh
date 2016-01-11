@@ -47,25 +47,25 @@ failure "--wronly: open valid file"
 
 # --command
 
-# bug
 ./simpsh --rdonly $a --wronly $b --wronly $c --command 0 1 2 cat - > /dev/null
 diff -u $a $b 
 success "--command: execute simple command 'cat' "
 
-# ./simpsh --rdonly $a --wronly $b --wronly $c --command 0 1 2 3 cat - | cat $c | grep "Error: Unknown command" > /dev/null
-# success "--command: report invalid number of arguments"
-
 ./simpsh --rdonly $a --wronly $b --wronly $c --command 0 1 cat - 2>&1 | grep "Error: Incorrect usage of --command. Requires integer argument." > /dev/null
 success "--command: report none digit file descripter"
 
+#bug
+#./simpsh --rdonly $a --wronly $b --wronly $c --command 0 1 2 3 cat - | cat $c | grep "Error: Unknown command" > /dev/null
+#success "--command: report invalid number of arguments"
+
 # --verbose
 # bug
-./simpsh --verbose --rdonly $a --wronly $b --wronly $c --command 0 1 2 cat - > $d
-diff <(cat $d) <(echo $'--verbose\n--rdonly $a\n--wronly $b\n--wronly $c\n--command 0 1 2 cat -\n') > /dev/null
-success "--verbose: valid output when verbose is in the beginning"
+#./simpsh --verbose --rdonly $a --wronly $b --wronly $c --command 0 1 2 cat - > $d
+#diff <(cat $d) <(echo $'--verbose\n--rdonly $a\n--wronly $b\n--wronly $c\n--command 0 1 2 cat -\n') > /dev/null
+#success "--verbose: valid output when verbose is in the beginning"
 
-# bug
-#success "--verbose: valid output when verbose is in the middle of arguments"
+# make test for verbose in the middle
+# success "--verbose: valid output when verbose is in the middle of arguments"
 
 
 
