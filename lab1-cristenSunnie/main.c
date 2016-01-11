@@ -8,6 +8,7 @@ See README for further information
 #include <getopt.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <unistd.h>
 #include <ctype.h>
 #include <sys/wait.h>
 #include <sys/types.h>
