@@ -18,4 +18,4 @@ check:
 
 
 clean:
-	rm -f *.o *.tar.gz 
+	rm -f *.o *.tar.gz simpsh

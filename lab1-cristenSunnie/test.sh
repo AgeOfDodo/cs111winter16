@@ -28,6 +28,7 @@ a=/tmp/a || exit 1
 b=/tmp/b || exit 1
 c=/tmp/c || exit 1
 d=/tmp/d || exit 1
+e=/tmp/e || exit 1
 > "$a"
 > "$b"
 > "$c"
@@ -68,8 +69,17 @@ success "--command: report invalid number of arguments"
 
 # --verbose
 # bug
-#./simpsh --verbose --rdonly $a --wronly $b --wronly $c --command 0 1 2 cat - > $d
-#diff <(cat $d) <(echo $'--verbose\n--rdonly $a\n--wronly $b\n--wronly $c\n--command 0 1 2 cat -\n') > /dev/null
+./simpsh --verbose --rdonly $a --wronly $b --wronly $c --command 0 1 2 cat - > $d
+echo '--rdonly /tmp/a ' > $e
+echo '--wronly /tmp/b ' >> $e
+echo '--wronly /tmp/c ' >> $e
+echo '--command 0 1 2 cat - ' >> $e
+echo "d is "
+cat $d
+echo
+echo "e is "
+cat $e
+diff -u $d $e #> /dev/null
 #success "--verbose: valid output when verbose is in the beginning"
 
 # make test for verbose in the middle
