@@ -6,10 +6,20 @@
 # exit with 0 upon success.
 # exit with 1 when at least one test fails.
 
+success()
+{
+	if [ $? -ne 0 ]; then
+		echo "FAIL case: $1"
+	fi
+}
 
+failure()
+{
+	if [ $? -eq 0 ]; then
+		echo "FAIL case: $1"; #exit(1)
+	fi
+}
 
-
-# set -x
 # tmp files
 								# exit if fails to create files
 a=$(mktemp /tmp/a.XXXXXXXXXX) || exit 1
@@ -17,20 +27,37 @@ b=$(mktemp /tmp/b.XXXXXXXXXX) || exit 1
 c=$(mktemp /tmp/c.XXXXXXXXXX) || exit 1
 
 # for lab 1a
-# be able to run simple --rdonly, --wronly, --command
 echo "hello from file a" > $a
-cmd="./main.o --rdonly $a --wronly $b --wronly $c --command 0 1 2 cat - "
-eval $cmd
-diff -u $a $b 
-if [ $? -ne 0 ]
-then
-	echo "Test Fails: $cmd" >&2
-else 
-	echo "Test Success: $cmd" >&2
-fi
+
+# --rdonly
+./simpsh --rdonly noFile 2>&1 | grep "Error: open returned unsuccessfully" > /dev/null
+success "--rdonly: report invalid filename."
+./simpsh --rdonly $a 2>&1 | grep "Error: open returned unsuccessfully" > /dev/null
+failure "--rdonly: open valid file."
+
+# --wronly
+./simpsh --wronly noFile 2>&1 | grep "Error: open returned unsuccessfully" > /dev/null
+success "--wronly: report invalid filename"
+./simpsh --wronly $a 2>&1 | grep "Error: open returned unsuccessfully" > /dev/null
+failure "--wronly: open valid file"
+
+# --command
+./simpsh --rdonly $a --wronly $b --wronly $c --command 0 1 2 cat - | diff $a $b > /dev/null
+success "--command: execute simple command cat"
+
+./simpsh --rdonly $a --wronly $b --wronly $c --command 0 1 2 3 cat - | cat $c | grep "Error: Unknown command" > /dev/null
+success "--command: report invalid number of arguments"
+
+./simpsh --rdonly $a --wronly $b --wronly $c --command 0 1 cat - 2>&1 | grep "Error: Incorrect usage of --command. Requires integer argument." > /dev/null
+success "--command: report none digit file descripter"
+
+# --verbose
+./simpsh --verbose --rdonly $a --wronly $b --wronly $c --command 0 1 2 cat - | diff - <(echo $'--verbose\n--rdonly $a\n--wronly $b\n--wronly $c\n--command 0 1 2 cat -\n') > /dev/null
+#success "--verbose: valid output when verbose is in the beginning"
 
 
 # delete temp files
 rm "$a"
 rm "$b"
 rm "$c"
+

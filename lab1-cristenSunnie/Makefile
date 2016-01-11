@@ -2,10 +2,10 @@
 
 CC = gcc
 #CFLAGS = 
-default: main.o
+default: simpsh
 
-main.o: main.c 
-	$(CC) main.c -o main.o
+simpsh: main.c 
+	$(CC) main.c -o $@
 
 dist: lab1-CristenAnderson_SunnieSo.tar.gz
 

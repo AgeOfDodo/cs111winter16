@@ -218,7 +218,7 @@ main(int argc, char **argv)
 
           execvp(args_array[0], args_array);
           //return to main program if execvp fails
-          fprintf(stderr, "Error: Unknown commmand '%s'\n", args_array[0]);
+          fprintf(stderr, "Error: Unknown command '%s'\n", args_array[0]);
           exit(255);  
         }
         break;
