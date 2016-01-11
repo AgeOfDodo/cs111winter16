@@ -135,7 +135,8 @@ main(int argc, char **argv)
             else { flags = "--wronly"; }
             printf("%s ", flags);
             printf("%s ", optarg);
-            for (int j = 0; j < args_array_cur; j++) {
+            int j;
+            for (j = 0; j < args_array_cur; j++) {
               printf("%s ", args_array[j]);
             }
             printf("\n");
@@ -192,7 +193,8 @@ main(int argc, char **argv)
 
         if (verbose == 1) {
           printf("--command %d %d %d ", i,o,e);
-          for (int j = 0; j < args_array_cur-1; j++) {
+          int j;
+          for (j = 0; j < args_array_cur-1; j++) {
             printf("%s ", args_array[j]);
           }
           printf("\n");
