@@ -6,22 +6,6 @@
 # exit with 0 upon success.
 # exit with 1 when at least one test fails.
 
-success()
-{
-	if [ $? -ne 0 ]; then
-		echo "FAIL: $1"
-		exit 1
-	fi
-}
-
-failure()
-{
-	if [ $? -eq 0 ]; then
-		echo "FAIL: $1"; 
-		exit 1
-	fi
-}
-
 # tmp files
 # exit if fails to create files
 a=/tmp/a || exit 1
@@ -43,59 +27,46 @@ e=/tmp/e || exit 1
 echo "hello from file a" > $a
 
 # --rdonly
-./simpsh --rdonly noFile 2>&1 | grep "Error: open returned unsuccessfully" > /dev/null
-success "--rdonly: report invalid filename."
-./simpsh --rdonly $a 2>&1 | grep "Error: open returned unsuccessfully" > /dev/null
-failure "--rdonly: open valid file."
+./simpsh --rdonly noFile 2>&1 | grep "Error: open returned unsuccessfully" > /dev/null ||{ echo "FAIL: --rdonly: report invalid filename."; exit 1; }
 
 # --wronly
-./simpsh --wronly noFile 2>&1 | grep "Error: open returned unsuccessfully" > /dev/null
-success "--wronly: report invalid filename"
-./simpsh --wronly $a 2>&1 | grep "Error: open returned unsuccessfully" > /dev/null
-failure "--wronly: open valid file"
-
+./simpsh --wronly noFile 2>&1 | grep "Error: open returned unsuccessfully" > /dev/null || { echo "FAIL: --wronly: report invalid filename"; exit 1; }
 
 # --command
 
-./simpsh --rdonly $a --wronly $b --wronly $c --command 0 1 2 cat - 
-diff -u $a $b > /dev/null
-success "--command: execute simple command 'cat' "
-
-# clean useless content
-> "$b"
+./simpsh --rdonly $a --wronly $b --wronly $c --command 0 1 2 cat -
 > "$c"
+> "$d"
+cat $a > $c
+cat $b > $d
+diff -u $c $d > /dev/null || { echo "FAIL: --command: execute simple command 'cat' "; exit 1;}
 
+
+> "$c"
 ./simpsh --rdonly $a --rdonly $b --wronly $c --command 0 1 2 cat -
-cat $c | grep "Bad file descriptor" > /dev/null
-success "--rdonly: Error on writing to read_only file"
 
-./simpsh --command 0 1 2 echo "hi" 2>&1 | grep "initiation" > /dev/null
-success "--command: report uninitialized file descriptor"
+./simpsh --command 0 1 2 echo "hi" 2>&1 | grep "initiation" > /dev/null || { echo "FAIL: --command: report uninitialized file descriptor"; exit 1;}
 
-./simpsh --rdonly $a --wronly $b --wronly $c --command 0 1 cat - 2>&1 | grep "Error: Incorrect usage of --command. Requires integer argument." > /dev/null
-success "--command: report none digit file descriptor"
+# To prevent race condition, let the next command run first...
+cat $c | grep "Bad file descriptor" > /dev/null || { echo "FAIL: --rdonly: Error on writing to read_only file"; exit 1; }
+
+./simpsh --rdonly $a --wronly $b --wronly $c --command 0 1 cat - 2>&1 | grep "Error: Incorrect usage of --command. Requires integer argument." > /dev/null || { echo "FAIL: --command: report none digit file descriptor"; exit 1;}
 
 ./simpsh --rdonly $a --wronly $b --wronly $c --command 0 1 2 3 cat - 2>&1 > /dev/null
-cat $c |grep "Error: Unknown command"  > /dev/null
-success "--command: report invalid number of arguments"
+cat $c |grep "Error: Unknown command"  > /dev/null || { echo "FAIL: --command: report invalid number of arguments"; exit 1; }
 
-./simpsh --command 0 1 2 echo "hi" 2>&1 | grep "Error: Invalid use of file descriptor" > /dev/null
-success "--command: report invalid use of file descriptor"
+./simpsh --command 0 1 2 echo "hi" 2>&1 | grep "Error: Invalid use of file descriptor" > /dev/null || { echo "FAIL: --command: report invalid use of file descriptor"; exit 1;}
 
 
 # --verbose
 
 ./simpsh --verbose --rdonly $a --wronly $b --wronly $c --command 0 1 2 cat - > $d
 echo '--rdonly /tmp/a ' > $e; echo '--wronly /tmp/b ' >> $e; echo '--wronly /tmp/c ' >> $e; echo '--command 0 1 2 cat - ' >> $e
-diff -u $d $e > /dev/null
-success "--verbose: valid output when verbose is in the beginning"
+diff -u $d $e > /dev/null || { echo "FAIL: --verbose: valid output when verbose is in the beginning"; exit 1;}
 
 ./simpsh --rdonly $a --wronly $b --verbose --wronly $c --command 0 1 2 cat - > $d
 echo '--wronly /tmp/c ' > $e; echo '--command 0 1 2 cat - ' >> $e
-diff -u $d $e > /dev/null
-success "--verbose: valid output when verbose is in the middle of arguments"
-
-
+diff -u $d $e > /dev/null || { echo "FAIL: --verbose: valid output when verbose is in the middle of arguments"; exit 1;}
 
 
 # delete temp files
