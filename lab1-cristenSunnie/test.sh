@@ -24,10 +24,18 @@ failure()
 
 # tmp files
 								# exit if fails to create files
-a=$(mktemp /tmp/a.XXXXXXXXXX) || exit 1
-b=$(mktemp /tmp/b.XXXXXXXXXX) || exit 1
-c=$(mktemp /tmp/c.XXXXXXXXXX) || exit 1
-d=$(mktemp /tmp/d.XXXXXXXXXX) || exit 1
+a=/tmp/a || exit 1
+b=/tmp/b || exit 1
+c=/tmp/c || exit 1
+d=/tmp/d || exit 1
+> "$a"
+> "$b"
+> "$c"
+> "$d"
+# a=$(mktemp /tmp/a.XXXXXXXXXX) || exit 1
+# b=$(mktemp /tmp/b.XXXXXXXXXX) || exit 1
+# c=$(mktemp /tmp/c.XXXXXXXXXX) || exit 1
+# d=$(mktemp /tmp/d.XXXXXXXXXX) || exit 1
 
 
 # for lab 1a
@@ -54,9 +62,9 @@ success "--command: execute simple command 'cat' "
 ./simpsh --rdonly $a --wronly $b --wronly $c --command 0 1 cat - 2>&1 | grep "Error: Incorrect usage of --command. Requires integer argument." > /dev/null
 success "--command: report none digit file descripter"
 
-#bug
-#./simpsh --rdonly $a --wronly $b --wronly $c --command 0 1 2 3 cat - | cat $c | grep "Error: Unknown command" > /dev/null
-#success "--command: report invalid number of arguments"
+./simpsh --rdonly $a --wronly $b --wronly $c --command 0 1 2 3 cat - 2>&1 > /dev/null
+cat $c |grep "Error: Unknown command"  > /dev/null
+success "--command: report invalid number of arguments"
 
 # --verbose
 # bug
