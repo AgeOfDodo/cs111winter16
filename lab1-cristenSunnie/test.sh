@@ -56,8 +56,8 @@ failure "--wronly: open valid file"
 
 # --command
 
-./simpsh --rdonly $a --wronly $b --wronly $c --command 0 1 2 cat - > /dev/null
-diff -u $a $b 
+./simpsh --rdonly $a --wronly $b --wronly $c --command 0 1 2 cat - 
+diff -u $a $b > /dev/null
 success "--command: execute simple command 'cat' "
 
 ./simpsh --rdonly $a --wronly $b --wronly $c --command 0 1 cat - 2>&1 | grep "Error: Incorrect usage of --command. Requires integer argument." > /dev/null
