@@ -3,6 +3,7 @@ See README for further information
  */
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <getopt.h>
 #include <sys/stat.h>
 #include <fcntl.h>
