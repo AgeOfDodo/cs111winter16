@@ -11,9 +11,11 @@ It can be built using make, and run using ./simpsh
 
 We have implemented the --wronly, --rdonly, --command, and 
 --verbose flags using the appropriate commands as outlined
-in the specification on the class website.
+in the specification on the class website. The --wait command
+is in progress but not currently working.
 
 Our testing is in test.sh, which can be invoked using "make check".
 
 We implemented the Makefile such that the user can use "make", "make check",
-"make clean", "make dist" as specified in the spec. 
+"make clean", "make dist" as specified in the spec. There are currently
+no tests run for "make dist". 
