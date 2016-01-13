@@ -94,7 +94,7 @@ int main(int argc, char **argv) {
   int * fd_array = malloc(fd_array_size*sizeof(int));
 
   // open flag
-  int oflag;
+  int oflag = 0;
 
   // Verbose can be on or off, automatically set to off
   int verbose = 0;
@@ -108,7 +108,20 @@ int main(int argc, char **argv) {
         {"wronly",      required_argument,  0,  'w' },
         {"command",     required_argument,  0,  'c' },
         {"verbose",     no_argument,        0,  'v' },
-        {"wait",        no_argument,        0,  'z'}
+        {"wait",        no_argument,        0,  'z' },
+   //  file flags
+        {"append",      no_argument,        0,  6 },
+        {"cloexec",     no_argument,        0,  7 },
+        {"creat",       no_argument,        0,  8 },
+        {"directory",   no_argument,        0,  9 },
+        {"dsync",       no_argument,        0,  10 },
+        {"excl",        no_argument,        0,  11 },
+        {"nofollow",    no_argument,        0,  12 },
+        {"nonblock",    no_argument,        0,  13 },
+        {"rsync",       no_argument,        0,  14 },
+        {"sync",        no_argument,        0,  15 },
+        {"trunc",       no_argument,        0,  16 },
+
     };
 
     // get the next option
@@ -128,8 +141,8 @@ int main(int argc, char **argv) {
     case 'r': // read only 
     case 'w': // write only
    		// assign oflag
-      if (c == 'r') 	oflag = O_RDONLY;
-   		else 			oflag = O_WRONLY;
+      if (c == 'r') 	oflag = O_RDONLY | oflag;
+   		else 			oflag = O_WRONLY | oflag;
       
       // find all arguments for the current flag
       optind = findArgs(args_array, args_array_size, optind, &args_array_cur,
@@ -162,9 +175,12 @@ int main(int argc, char **argv) {
       }
       fd_array[fd_array_cur] = rw_fd;
       fd_array_cur++;
+
+      //clean oflag content.
+      oflag = 0;
       break;   
       
-      case 'c': { // command (format: --command i o e cmd args_array)
+    case 'c': { // command (format: --command i o e cmd args_array)
       int i, o, e; // stdin, stdout, stderr
 
       //store the file descripter numbers and check for errors
@@ -249,8 +265,44 @@ int main(int argc, char **argv) {
       break;
     }
      
-    case '?': // ? returns when doesn't recognize option character
-      break;
+//append
+    case 6:
+      oflag |= O_APPEND;
+    break;
+//cloexev
+    case 7:
+    break;
+//creat
+    case 8:
+    break;
+//directory
+    case 9:
+    break;
+//dsync
+    case 10:
+    break;
+//excl
+    case 11:
+    break;
+//nofollow
+    case 12:
+    break;
+//nonblock
+    case 13:
+    break;
+//rsync
+    case 14:
+    break;
+//sync
+    case 15:
+    break;
+//trunc
+    case 16:
+    break;
+
+
+    // case '?': // ? returns when doesn't recognize option character
+      // break;
 
     default:
         fprintf(stderr, "Error: ?? getopt returned character code 0%o ??\n", c);
