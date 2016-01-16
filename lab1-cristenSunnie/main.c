@@ -81,6 +81,13 @@ int findArgs(char*** args_array, size_t args_array_size,
   return index;
 }
 
+
+struct wait_output_chain{
+  pid_t childPid;
+  int begin;
+  int end;
+};
+
 int main(int argc, char **argv) {
   // c holds return value of getopt_long
   int c;
@@ -103,6 +110,11 @@ int main(int argc, char **argv) {
 
   // Verbose can be on or off, automatically set to off
   int verbose = 0;
+
+  //wait 
+  size_t wait_info_size = 2;
+  int wait_info_cur = 0;
+  struct wait_output_chain* wait_info = malloc(wait_info_size * sizeof *wait_info);
 
   // Parse options
   while (1) {
@@ -174,7 +186,9 @@ int main(int argc, char **argv) {
         fprintf(stderr, "Error: Invalid number of arguments for --command\n");
         break;
       }
-
+      //for wait.
+      int cmd_begin = optind;
+      int cmd_end;
       // save command into args array
       args_array[0] = argv[optind]; optind++;
       args_array_cur++;
@@ -182,12 +196,13 @@ int main(int argc, char **argv) {
       // find arguments for command
       optind = findArgs(&args_array, args_array_size, optind, &args_array_cur,
                         argc, argv);
-      
-      //append NULL to args_array (necessary for execvp())
+      cmd_end = optind;
+
       if(args_array_cur == args_array_size){
-          args_array_size++;
+          args_array_size*=2;
           args_array = (char**)realloc((void*)args_array, args_array_size*sizeof(char*)); 
       }
+      //append NULL to args_array (necessary for execvp())
       args_array[args_array_cur] = NULL;
       args_array_cur++;
 
@@ -204,6 +219,8 @@ int main(int argc, char **argv) {
       if(!(validFd(i,fd_array_cur) && validFd(o,fd_array_cur) && validFd(e,fd_array_cur)))  
         continue;
 
+      args_array[args_array_cur] = NULL;
+      args_array_cur++;
       // execute command
       pid_t pid = fork();
       if(pid == 0){   //child process
@@ -217,6 +234,16 @@ int main(int argc, char **argv) {
         fprintf(stderr, "Error: Unknown command '%s'\n", args_array[0]);
         exit(255);  
       }
+
+       //record command in wait_output_chain for --wait
+      if(wait_info_cur == wait_info_size){
+          wait_info_size *=2;
+          wait_info = realloc((void*)wait_info, wait_info_size*sizeof *wait_info); 
+      }
+      wait_info[wait_info_cur].childPid = pid;
+      wait_info[wait_info_cur++].begin = cmd_begin;
+      wait_info[wait_info_cur++].end = cmd_end;
+      
       break;
     }
 //wait
@@ -230,11 +257,15 @@ int main(int argc, char **argv) {
       if (waitStatus > exit_status) {
         exit_status = waitStatus;
       }
-      for (j = 0; j < args_array_cur-1; j++) {
-        printf("%s ", args_array[j]);
+      break;
+      for(j = 0 ; j != wait_info_cur; j++){
+        if(returnedPid == (wait_info[j]).childPid)
+          break;
       }
-      
-
+      int j1= j;
+      for (j = wait_info[j1].begin; j != wait_info[j1].end; j++) {
+        printf("%s ", argv[j]);
+      }
       printf("\n");
       break;
     }
@@ -403,7 +434,15 @@ int main(int argc, char **argv) {
     // Free arguments array for next command
    // if(args_array_cur != 0){
      // printf("freeing args_array at c = %d\n", c);
+      // printf("freeing args %s\n", args_array[0]);
       free(args_array);
+    // if(c != 'c'){
+    // }
+    // else{
+    //   printf("NOT freeing args %s\n", args_array[0]);
+    //   printf("keep wait_info[%d].cmd = %s\n", wait_info_cur - 1, (*(wait_info[wait_info_cur-1].cmd))[0]);
+    // }
+
    // }
   }
 
@@ -429,9 +468,14 @@ int main(int argc, char **argv) {
   	fd_array_cur--;
   }
   // Free file descriptor array
-  //printf("freeing fd_array\n");
+  // printf("freeing fd_array\n");
   free(fd_array);
-
+  // for(j = 0 ; j < wait_info_cur; j++){
+  //   printf("freeing %s\n",(*(wait_info[j].cmd))[0]);
+  //   free(*(wait_info[j].cmd));
+  // }
+  // printf("freeing wait_info\n");
+  free(wait_info);
   // Exit with previously set status
   exit(exit_status);
 }
