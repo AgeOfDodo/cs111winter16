@@ -12,6 +12,7 @@ See README for further information
 #include <sys/wait.h>
 #include <sys/types.h>
 #include <string.h>
+#include <errno.h>
 // [command] Check if a file descriptor is valid
 int validFd(int fd, int fd_array_cur){
 	if( fd >= fd_array_cur){	
@@ -54,7 +55,7 @@ int passChecks(char* str, int index, int num_args) {
 // Stores all arguments for a command in args_array, until the next "--" flag
 // Doesn't include optarg which is accepted automatically.
 // Keeps the current index updated and returns the updated argv index (optind)
-int findArgs(char** args_array, size_t args_array_size, 
+int findArgs(char*** args_array, size_t args_array_size, 
               int index, int* args_current,
               int argc, char** argv) {
   
@@ -70,9 +71,9 @@ int findArgs(char** args_array, size_t args_array_size,
     //realloc: same mechanics as fd_array
     if(args_array_cur == args_array_size){
       args_array_size *= 2;
-      args_array = (char**)realloc((void*)args_array, args_array_size*sizeof(char*)); 
+      *args_array = (char**)realloc(*args_array, args_array_size*sizeof(char*)); 
     }
-    args_array[args_array_cur] = argv[index];
+    (*args_array)[args_array_cur] = argv[index];
     args_array_cur++;
     index++;
   }
@@ -129,13 +130,14 @@ int main(int argc, char **argv) {
         {"pipe",        no_argument,        0,  20 },
  
 // MISCELLANEOUS  
+        {"close",      required_argument,  0,  28 },
         {"verbose",     no_argument,        0,  21 },
         {"profile",     no_argument,        0,  22 },
         {"abort",       no_argument,        0,  23 },
         {"catch",       required_argument,  0,  24 },
         {"ignore",      required_argument,  0,  25 },
         {"default",     required_argument,  0,  26 },
-        {"pause",       no_argument,        0,  27 },
+        {"pause",       no_argument,        0,  27 }
         
     };
 
@@ -178,7 +180,7 @@ int main(int argc, char **argv) {
       args_array_cur++;
 
       // find arguments for command
-      optind = findArgs(args_array, args_array_size, optind, &args_array_cur,
+      optind = findArgs(&args_array, args_array_size, optind, &args_array_cur,
                         argc, argv);
       
       //append NULL to args_array (necessary for execvp())
@@ -231,6 +233,8 @@ int main(int argc, char **argv) {
       for (j = 0; j < args_array_cur-1; j++) {
         printf("%s ", args_array[j]);
       }
+      
+
       printf("\n");
       break;
     }
@@ -290,7 +294,7 @@ int main(int argc, char **argv) {
       else if( c== 18)  oflag = O_WRONLY | oflag;
       else              oflag = O_RDWR | oflag;
       // find all arguments for the current flag
-      optind = findArgs(args_array, args_array_size, optind, &args_array_cur,
+      optind = findArgs(&args_array, args_array_size, optind, &args_array_cur,
                         argc, argv);
 
       // print command if verbose is enabled
@@ -318,9 +322,10 @@ int main(int argc, char **argv) {
       }
       
       // save file descriptor to array
-      if (fd_array_cur == fd_array_size) {
+      if (fd_array_cur >= fd_array_size) {
         fd_array_size *= 2;
-        fd_array = (int*)realloc((void*)fd_array, fd_array_size); 
+        //printf("fd_array reallocs %zu\n", fd_array_size);
+        fd_array = (int*)realloc(fd_array, fd_array_size*sizeof(int)); 
       }
       fd_array[fd_array_cur] = rw_fd;
       fd_array_cur++;
@@ -330,23 +335,40 @@ int main(int argc, char **argv) {
       break;   
 //pipe
     case 20:
-      if(verbose) printf("--pipe\n");
+      optind = findArgs(&args_array, args_array_size, optind, &args_array_cur,
+                        argc, argv);
+
+      if(verbose){
+        printf("--pipe ");
+        for(j = 0 ; j != args_array_cur; j++){
+          printf("%s ", args_array[j]);
+        }      
+        printf("\n");
+      }
+      if(args_array_cur > 0 ){
+        fprintf(stderr, "Error: --pipe does not take arguments.");
+      }
       int pipefd[2]; //store indices of fd_array
       if(pipe(pipefd)== -1){
-        fprintf(stderr, "Error: fail to create pipe. pipe() returns -1.\n");
+          perror("pipe()");
+//        fprintf(stderr, "Error: fail to create pipe. pipe() returns -1.\n");
       }
+
       // save file descriptor to array
       if (fd_array_cur  + 1 >= fd_array_size) {
         fd_array_size *= 2;
-        fd_array = (int*)realloc((void*)fd_array, fd_array_size); 
+      // printf("fd_array reallocs %zu\n", fd_array_size);
+       // printf("fd_cur = %d\n", fd_array_cur);
+        fd_array = (int*)realloc(fd_array, fd_array_size*sizeof(int)); 
       }
       fd_array[fd_array_cur++] = pipefd[0];
       fd_array[fd_array_cur++] = pipefd[1];
 
-
       break;
 
-
+//close
+    case 28:
+      break;
 //verbose
     case 21: 
       verbose = 1;
@@ -379,26 +401,35 @@ int main(int argc, char **argv) {
         fprintf(stderr, "Error: ?? getopt returned character code 0%o ??\n", c);
     }
     // Free arguments array for next command
-    free(args_array);
+   // if(args_array_cur != 0){
+     // printf("freeing args_array at c = %d\n", c);
+      free(args_array);
+   // }
   }
 
   // Prints out extra options that weren't parsed
  // if (optind < argc) {
- //      printf("non-option ARGV-elements: ");
+ //      printf("non-option ARGV-elements: ")
  //      while (optind < argc)
  //          printf("%s ", argv[optind++]);
  //      printf("\n");
  //  }
 
-
+/*
+  for(j = 0; j != fd_array_cur; j++)
+    printf("fd_array[%d] = %d, addr = %p\n", j, fd_array[j],(void*)&(fd_array[j]));
+  for(;j < fd_array_size; j++)
+    printf("fd_array[%d] = NULL, addr = %p\n",j, (void*)&(fd_array[j]));
+  printf("fd_size = %zu\n", fd_array_size);
+*/
   // Close all used file descriptors
   fd_array_cur--;
   while (fd_array_cur >= 0) {
   	close(fd_array[fd_array_cur]);
   	fd_array_cur--;
   }
-
   // Free file descriptor array
+  //printf("freeing fd_array\n");
   free(fd_array);
 
   // Exit with previously set status
