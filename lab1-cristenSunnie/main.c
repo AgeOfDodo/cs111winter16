@@ -246,13 +246,7 @@ int main(int argc, char **argv) {
 
         // if 'i' is a read end pipe fd, and write end of the pipe has not been used, then wait
         // on the command that uses the write end of the pipe.
-        if(fd_isPipe[i] == 1 && fd_isPipe[i+1] != 0 ){
-          printf("%s waits for fd %d to terminate. target pid = %d ...\n", args_array[0], i+1,fd_isPipe[i+1]);
-          waitpid((pid_t)fd_isPipe[i+1], NULL, 0);
-          printf("%s.\tDone waiting! Ready to execute command %s...\n", args_array[0],args_array[0]);
-          fd_isPipe[i+1] = 0;
-        }
-         
+
        
         /* StackOverflow:If you use dup() or dup2() to duplicate one end of a pipe 
            to standard input or standard output, you need to close() both ends of 
@@ -265,21 +259,22 @@ int main(int argc, char **argv) {
         dup2(fd_array[i], 0);
         dup2(fd_array[o], 1);
         dup2(fd_array[e], 2);
-        if(fd_isPipe[i] == 1){
-          printf("%s.\tClose read  i,\t closing fd = %d: %d\n", args_array[0], i, close(fd_array[i]));
-          printf("%s.\tClose write i,\t closing fd = %d: %d\n", args_array[0], i+1,close(fd_array[i+1]));
-          // close(fd_array[o-1]);
-        }
-        if(fd_isPipe[o] == 1){
-          printf("%s.\tClose read  o,\t closing fd = %d: %d\n", args_array[0], o-1, close(fd_array[o-1]));
-          printf("%s.\tClose write o,\t closing fd = %d: %d\n", args_array[0], o, close(fd_array[o]));
-          // close(fd_array[o-1]);
-        }
+        if(fd_isPipe[i] != 0)
+        //   // printf("%s.\tClose read  i,\t closing fd = %d: %d\n", args_array[0], i, close(fd_array[i]));
+          // printf("%s.\tClose write i,\t closing fd = %d: %d\n", args_array[0], i+1,close(fd_array[i+1]));
+          close(fd_array[i+1]);
+        // }
+        if(fd_isPipe[o] != 0)
+        //   printf("%s.\tClose read  o,\t closing fd = %d: %d\n", args_array[0], o-1, close(fd_array[o-1]));
+        // printf("%s.\tClose write o,\t closing fd = %d: %d\n", args_array[0], o, close(fd_array[o]));
+          close(fd_array[o-1]);
+        // }
         // printf("%s,\tclose %d: %d\n", args_array[0], i, close(fd_array[i]));
         // printf("%s,\tclose %d: %d\n", args_array[0], o, close(fd_array[o]));
         // printf("%s,\tclose %d: %d\n", args_array[0], e, close(fd_array[e]));
-        // close(fd_array[o]);
-        // close(fd_array[e]);
+        close(fd_array[i]);
+        close(fd_array[o]);
+        close(fd_array[e]);
 
         execvp(args_array[0], args_array);
         //return to main program if execvp fails
@@ -288,8 +283,15 @@ int main(int argc, char **argv) {
       }
       printf("Parent process: child proces pid = %d, cmd = %s\n", pid, args_array[0]);
       // if 'o' is a write end pipe fd, then set fd_isPipe[o] to the pid
-      if(fd_isPipe[o] == 1)
+      if(fd_isPipe[o] != 0){
         fd_isPipe[o] = (int) pid;
+        close(fd_array[o]);
+      }
+      if(fd_isPipe[i] != 0){
+        fd_isPipe[i];
+        close(fd_array[i]);
+      }
+
 
       // prepare to store the child pid to pid_array
       if(pid_array_cur == pid_array_size){
@@ -325,23 +327,17 @@ int main(int argc, char **argv) {
       int j1;
       for(j1 = 0; j1 < pid_array_cur; j1++){
         // printf("waitpid is waiting...\n");m              
-        printf("pid_array[%d] = %d\n", j1, pid_array[j]);
+        printf("pid_array[%d] = %d\n", j1, pid_array[j1]);
         returnedPid = waitpid(pid_array[j1], &status, WNOHANG);
         printf("pid_array_cur = %d, j = %d, WNOHANG: pid = %d\n", pid_array_cur, j1, returnedPid);
-        if (WIFEXITED(status)){
-          continue;
-        }else{
-          
+        if (!WIFEXITED(status)){
           returnedPid = waitpid(pid_array[j1], &status, 0);
         }
 
         // printf("waitpid returns %d\n", returnedPid);
         // returnedPid = waitpid(WAIT_ANY, &status, WNOHANG);// > 0 || WIFEXITED(status)){
         // printf("returnPid = %d\n", returnedPid);
-        if(!WIFEXITED(status)){
-          // printf("No child has exited, continue waiting...\n");
-          continue;
-        }
+        
         if(returnedPid == 0){ printf("returnedPid == 0\n"); continue;}
         if(returnedPid == -1){ continue;}
 
