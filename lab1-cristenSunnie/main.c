@@ -95,6 +95,8 @@ int main(int argc, char **argv) {
   // j is an iterator for for loops
   int j;
 
+  // status for child process
+  int status;
   // will be updated to 1 if any calls to open fail
   int exit_status = 0;
 
@@ -102,6 +104,13 @@ int main(int argc, char **argv) {
   size_t fd_array_size = 2;
   int fd_array_cur = 0;
   int * fd_array = malloc(fd_array_size*sizeof(int));
+  // Declare a fd_isPipe.   
+  int * fd_isPipe = malloc(fd_array_size*sizeof(int));/*fd_isPipe[fd] is 1 if fd is read end pipe descripter. 
+                                                        if fd is the write end of the pipe and has not been used, 
+                                                        fd_isPipe[fd] stores the pid of the process that uses it.
+                                                        if the process that uses fd is terminated, fd_isPipe[fd] 
+                                                        will be set to 0.  
+                                                        fd_isPipe[fd] is also 0 for regular file descripters.*/
 
   // open flag
   int oflag = 0;
@@ -116,6 +125,10 @@ int main(int argc, char **argv) {
   int wait_info_cur = 0;
   struct wait_output_chain* wait_info = malloc(wait_info_size * sizeof *wait_info);
 
+  // storing pid.
+  size_t pid_array_size = 2;
+  int pid_array_cur = 0;
+  pid_t* pid_array = malloc(pid_array_size*sizeof(pid_t));
   // Parse options
   while (1) {
     int option_index = 0;
@@ -186,9 +199,10 @@ int main(int argc, char **argv) {
         fprintf(stderr, "Error: Invalid number of arguments for --command\n");
         break;
       }
-      //for wait.
+      //for --wait. Record the location of the command substring in argv for --wait to output later
       int cmd_begin = optind;
       int cmd_end;
+
       // save command into args array
       args_array[0] = argv[optind]; optind++;
       args_array_cur++;
@@ -221,52 +235,134 @@ int main(int argc, char **argv) {
 
       args_array[args_array_cur] = NULL;
       args_array_cur++;
-      // execute command
+
+      
+      // execute command      
       pid_t pid = fork();
       if(pid == 0){   //child process
+      
+        // Before executing the command, check that if need to wait for other process to write 
+        // into this input file descripter.
+
+        // if 'i' is a read end pipe fd, and write end of the pipe has not been used, then wait
+        // on the command that uses the write end of the pipe.
+        if(fd_isPipe[i] == 1 && fd_isPipe[i+1] != 0 ){
+          printf("%s waits for fd %d to terminate. target pid = %d ...\n", args_array[0], i+1,fd_isPipe[i+1]);
+          waitpid((pid_t)fd_isPipe[i+1], NULL, 0);
+          printf("%s.\tDone waiting! Ready to execute command %s...\n", args_array[0],args_array[0]);
+          fd_isPipe[i+1] = 0;
+        }
+         
+       
+        /* StackOverflow:If you use dup() or dup2() to duplicate one end of a pipe 
+           to standard input or standard output, you need to close() both ends of 
+           the original pipe.
+         */
+        
+
+
         //redirect stdin to i, stdout to o, stderr to e
         dup2(fd_array[i], 0);
         dup2(fd_array[o], 1);
         dup2(fd_array[e], 2);
+        if(fd_isPipe[i] == 1){
+          printf("%s.\tClose read  i,\t closing fd = %d: %d\n", args_array[0], i, close(fd_array[i]));
+          printf("%s.\tClose write i,\t closing fd = %d: %d\n", args_array[0], i+1,close(fd_array[i+1]));
+          // close(fd_array[o-1]);
+        }
+        if(fd_isPipe[o] == 1){
+          printf("%s.\tClose read  o,\t closing fd = %d: %d\n", args_array[0], o-1, close(fd_array[o-1]));
+          printf("%s.\tClose write o,\t closing fd = %d: %d\n", args_array[0], o, close(fd_array[o]));
+          // close(fd_array[o-1]);
+        }
+        // printf("%s,\tclose %d: %d\n", args_array[0], i, close(fd_array[i]));
+        // printf("%s,\tclose %d: %d\n", args_array[0], o, close(fd_array[o]));
+        // printf("%s,\tclose %d: %d\n", args_array[0], e, close(fd_array[e]));
+        // close(fd_array[o]);
+        // close(fd_array[e]);
 
         execvp(args_array[0], args_array);
         //return to main program if execvp fails
         fprintf(stderr, "Error: Unknown command '%s'\n", args_array[0]);
         exit(255);  
       }
+      printf("Parent process: child proces pid = %d, cmd = %s\n", pid, args_array[0]);
+      // if 'o' is a write end pipe fd, then set fd_isPipe[o] to the pid
+      if(fd_isPipe[o] == 1)
+        fd_isPipe[o] = (int) pid;
 
-       //record command in wait_output_chain for --wait
+      // prepare to store the child pid to pid_array
+      if(pid_array_cur == pid_array_size){
+          pid_array_size*=2;
+          pid_array = realloc(pid_array, pid_array_size*sizeof(pid_t)); 
+      }
+      pid_array[pid_array_cur++] = pid;
+      // printf("Waiting for process: %s\n", args_array[0]);
+      // while(pid != waitpid(pid, &status, WNOHANG) && !WIFEXITED(status)){
+      //   printf("Child process %d WIFEXITED=%d\n", pid, WIFEXITED(status));
+      // }
+      
+      // printf("Resuming main()...\n");
+
+      //record command in wait_output_chain for --wait
       if(wait_info_cur == wait_info_size){
           wait_info_size *=2;
           wait_info = realloc((void*)wait_info, wait_info_size*sizeof *wait_info); 
       }
       wait_info[wait_info_cur].childPid = pid;
-      wait_info[wait_info_cur++].begin = cmd_begin;
+      wait_info[wait_info_cur].begin = cmd_begin;
       wait_info[wait_info_cur++].end = cmd_end;
       
       break;
     }
 //wait
     case 'z': {
-      int status;
+      if (verbose){
+        printf("--wait\n");
+      }
       //wait any child process to finish. 0 is for blocking.
-      pid_t returnedPid = waitpid(WAIT_ANY, &status, 0);
-      //WEXITSTATUS returns the exit status of the child.
-      int waitStatus = WEXITSTATUS(status);
-      printf("%d ", waitStatus);
-      if (waitStatus > exit_status) {
-        exit_status = waitStatus;
+      pid_t returnedPid;
+      int j1;
+      for(j1 = 0; j1 < pid_array_cur; j1++){
+        // printf("waitpid is waiting...\n");m              
+        printf("pid_array[%d] = %d\n", j1, pid_array[j]);
+        returnedPid = waitpid(pid_array[j1], &status, WNOHANG);
+        printf("pid_array_cur = %d, j = %d, WNOHANG: pid = %d\n", pid_array_cur, j1, returnedPid);
+        if (WIFEXITED(status)){
+          continue;
+        }else{
+          
+          returnedPid = waitpid(pid_array[j1], &status, 0);
+        }
+
+        // printf("waitpid returns %d\n", returnedPid);
+        // returnedPid = waitpid(WAIT_ANY, &status, WNOHANG);// > 0 || WIFEXITED(status)){
+        // printf("returnPid = %d\n", returnedPid);
+        if(!WIFEXITED(status)){
+          // printf("No child has exited, continue waiting...\n");
+          continue;
+        }
+        if(returnedPid == 0){ printf("returnedPid == 0\n"); continue;}
+        if(returnedPid == -1){ continue;}
+
+       // //WEXITSTATUS returns the exit status of the child.
+        int waitStatus = WEXITSTATUS(status);
+        printf("%d ", waitStatus);
+
+        //the main program needs to return the with biggest value of exit status.
+        if (waitStatus > exit_status) {
+          exit_status = waitStatus;
+        }
+        for(j = 0 ; j != wait_info_cur; j++){
+          if(returnedPid == (wait_info[j]).childPid)
+            break;
+        }
+        int j1= j;
+        for (j = wait_info[j1].begin; j != wait_info[j1].end; j++) {
+          printf("%s ", argv[j]);
+        }
+        printf("\n");
       }
-      break;
-      for(j = 0 ; j != wait_info_cur; j++){
-        if(returnedPid == (wait_info[j]).childPid)
-          break;
-      }
-      int j1= j;
-      for (j = wait_info[j1].begin; j != wait_info[j1].end; j++) {
-        printf("%s ", argv[j]);
-      }
-      printf("\n");
       break;
     }
      
@@ -357,8 +453,10 @@ int main(int argc, char **argv) {
         fd_array_size *= 2;
         //printf("fd_array reallocs %zu\n", fd_array_size);
         fd_array = (int*)realloc(fd_array, fd_array_size*sizeof(int)); 
+        fd_isPipe = (int*)realloc(fd_isPipe, fd_array_size*sizeof(int));
       }
       fd_array[fd_array_cur] = rw_fd;
+      fd_isPipe[fd_array_cur] = 0;
       fd_array_cur++;
 
       //clean oflag content.
@@ -391,8 +489,11 @@ int main(int argc, char **argv) {
       // printf("fd_array reallocs %zu\n", fd_array_size);
        // printf("fd_cur = %d\n", fd_array_cur);
         fd_array = (int*)realloc(fd_array, fd_array_size*sizeof(int)); 
+        fd_isPipe = (int*)realloc(fd_isPipe, fd_array_size*sizeof(int));
       }
+      fd_isPipe[fd_array_cur] = 1;
       fd_array[fd_array_cur++] = pipefd[0];
+      fd_isPipe[fd_array_cur] = 1;
       fd_array[fd_array_cur++] = pipefd[1];
 
       break;
@@ -464,18 +565,21 @@ int main(int argc, char **argv) {
   // Close all used file descriptors
   fd_array_cur--;
   while (fd_array_cur >= 0) {
-  	close(fd_array[fd_array_cur]);
+    if(fd_array[fd_array_cur] != -1)
+    	close(fd_array[fd_array_cur]);
   	fd_array_cur--;
   }
   // Free file descriptor array
   // printf("freeing fd_array\n");
   free(fd_array);
+  free(fd_isPipe);
   // for(j = 0 ; j < wait_info_cur; j++){
   //   printf("freeing %s\n",(*(wait_info[j].cmd))[0]);
   //   free(*(wait_info[j].cmd));
   // }
   // printf("freeing wait_info\n");
   free(wait_info);
+  free(pid_array);
   // Exit with previously set status
   exit(exit_status);
 }
