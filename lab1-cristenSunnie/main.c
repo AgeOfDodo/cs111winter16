@@ -82,7 +82,7 @@ int findArgs(char*** args_array, size_t args_array_size,
 }
 
 
-struct wait_output_chain{
+struct waitInfo{
   pid_t childPid;
   int begin;
   int end;
@@ -123,12 +123,12 @@ int main(int argc, char **argv) {
   //wait 
   size_t wait_info_size = 2;
   int wait_info_cur = 0;
-  struct wait_output_chain* wait_info = malloc(wait_info_size * sizeof *wait_info);
+  struct waitInfo* wait_info = malloc(wait_info_size * sizeof *wait_info);
 
-  // storing pid.
-  size_t pid_array_size = 2;
-  int pid_array_cur = 0;
-  pid_t* pid_array = malloc(pid_array_size*sizeof(pid_t));
+  // // storing pid.
+  // size_t pid_array_size = 2;
+  // int pid_array_cur = 0;
+  // pid_t* pid_array = malloc(pid_array_size*sizeof(pid_t));
   // Parse options
   while (1) {
     int option_index = 0;
@@ -282,13 +282,13 @@ int main(int argc, char **argv) {
       }
 
 
-      // prepare to store the child pid to pid_array
-      if(pid_array_cur == pid_array_size){
-          pid_array_size*=2;
-          pid_array = realloc(pid_array, pid_array_size*sizeof(pid_t)); 
-      }
-      pid_array[pid_array_cur++] = pid;
-      // printf("Waiting for process: %s\n", args_array[0]);
+      // // prepare to store the child pid to pid_array
+      // if(pid_array_cur == pid_array_size){
+      //     pid_array_size*=2;
+      //     pid_array = realloc(pid_array, pid_array_size*sizeof(pid_t)); 
+      // }
+      // pid_array[pid_array_cur++] = pid;
+      // // printf("Waiting for process: %s\n", args_array[0]);
       // while(pid != waitpid(pid, &status, WNOHANG) && !WIFEXITED(status)){
       //   printf("Child process %d WIFEXITED=%d\n", pid, WIFEXITED(status));
       // }
@@ -314,17 +314,13 @@ int main(int argc, char **argv) {
       //wait any child process to finish. 0 is for blocking.
       pid_t returnedPid;
       int j1;
-      for(j1 = 0; j1 < pid_array_cur; j1++){
-        // printf("waitpid is waiting...\n");m              
-        // printf("pid_array[%d] = %d\n", j1, pid_array[j1]);
-        returnedPid = waitpid(pid_array[j1], &status, 0);
+      while((returnedPid = waitpid(0, &status, 0) )!= -1){
 
-        // printf("waitpid returns %d\n", returnedPid);
-        // returnedPid = waitpid(WAIT_ANY, &status, WNOHANG);// > 0 || WIFEXITED(status)){
-        // printf("returnPid = %d\n", returnedPid);
-        
-        if(returnedPid == 0){ continue; }
-        if(returnedPid == -1){ continue;}
+
+      // for(j1 = 0; j1 < pid_array_cur; j1++){
+      //   returnedPid = waitpid(pid_array[j1], &status, 0);
+      //   if(returnedPid == 0){ continue; }
+      //   if(returnedPid == -1){ continue;}
 
        // //WEXITSTATUS returns the exit status of the child.
         int waitStatus = WEXITSTATUS(status);
@@ -334,10 +330,12 @@ int main(int argc, char **argv) {
         if (waitStatus > exit_status) {
           exit_status = waitStatus;
         }
+        //find the corresponding wait_info
         for(j = 0 ; j != wait_info_cur; j++){
           if(returnedPid == (wait_info[j]).childPid)
             break;
         }
+        //print out the corresponding command lines from wait_info data structure.
         int j1= j;
         for (j = wait_info[j1].begin; j != wait_info[j1].end; j++) {
           printf("%s ", argv[j]);
@@ -565,7 +563,7 @@ int main(int argc, char **argv) {
   // }
   // printf("freeing wait_info\n");
   free(wait_info);
-  free(pid_array);
+  // free(pid_array);
   // Exit with previously set status
   exit(exit_status);
 }
