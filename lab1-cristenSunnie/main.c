@@ -13,13 +13,22 @@ See README for further information
 #include <sys/types.h>
 #include <string.h>
 #include <errno.h>
+#include <signal.h>
+
+
+#define MAX(a,b) (((a)>(b))?(a):(b))
+
 // [command] Check if a file descriptor is valid
-int validFd(int fd, int fd_array_cur){
+int validFd(int fd, int fd_array_cur, int* fd_array){
 	if( fd >= fd_array_cur){	
-  		fprintf(stderr, "Error: Invalid use of file descriptor %d before initiation.\n", fd);
-  		return 0;
-  	}
-  	return 1;
+  	fprintf(stderr, "Error: Invalid use of file descriptor %d before initiation.\n", fd);
+  	return 0;
+  }
+  if(fd_array[fd] == -1){
+    fprintf(stderr, "Error: Invalid access to file descriptor %d.\n", fd);
+  	return 0;
+  }
+  return 1;
 }
 
 // [read write] Check if the open system call had an error
@@ -197,6 +206,7 @@ int main(int argc, char **argv) {
       // check if there is the proper number of arguments
       if (optind >= argc) {
         fprintf(stderr, "Error: Invalid number of arguments for --command\n");
+        exit_status = MAX(1,exit_status);
         break;
       }
       //[--wait] Record the location of the command substring in argv for --wait to output later
@@ -230,8 +240,10 @@ int main(int argc, char **argv) {
       }
 
       //check if i,o,e fd are valid 
-      if(!(validFd(i,fd_array_cur) && validFd(o,fd_array_cur) && validFd(e,fd_array_cur)))  
+      if(!(validFd(i,fd_array_cur, fd_array) && validFd(o,fd_array_cur, fd_array) && validFd(e,fd_array_cur, fd_array))){  
+        exit_status = MAX(exit_status, 1);
         continue;
+      }
 
       args_array[args_array_cur] = NULL;
       args_array_cur++;
@@ -305,9 +317,10 @@ int main(int argc, char **argv) {
         printf("%d ", waitStatus);
 
         //the main program needs to return the with biggest value of exit status.
-        if (waitStatus > exit_status) {
-          exit_status = waitStatus;
-        }
+        // if (waitStatus > exit_status) {
+        //   exit_status = waitStatus;
+        // }
+        exit_status = MAX(exit_status, waitStatus);
         //find the corresponding wait_info
         for(j = 0 ; j != wait_info_cur; j++){
           if(returnedPid == (wait_info[j]).childPid)
@@ -401,7 +414,7 @@ int main(int argc, char **argv) {
       // open file into read write file descriptor
       int rw_fd = open(optarg, oflag, 777);
       if(checkOpenError(rw_fd) == -1) {
-        exit_status = 1;
+        exit_status = MAX(exit_status,1);
         continue;
       }
       
@@ -460,8 +473,25 @@ int main(int argc, char **argv) {
       if(verbose){
         printf("--close %s\n", optarg);
       }
-      
+      int N = -1;
+      for(j = 0; optarg != NULL && *(optarg+j) != '\0'; j++) {
+        if (!isdigit(*(optarg+j))) {
+          fprintf(stderr, "Error: Incorrect usage of --close. Requires an integer argument.\n");
+          exit_status = MAX(exit_status, 1);
+          continue;
+        }
+      }
+      if(N == -1) 
+        break;
+      N = atoi(optarg);
+      if(!validFd(N, fd_array_cur, fd_array)){
+        exit_status = MAX(exit_status, 1);
+        continue;
+      }
+      close(fd_array[N]);
+      fd_array[N] = -1;
       break;
+      
 //verbose
     case 21: 
       verbose = 1;
@@ -505,5 +535,6 @@ int main(int argc, char **argv) {
   free(fd_array);
   free(fd_isPipe);
   free(wait_info);
+  printf("EXit with %d\n",exit_status );
   exit(exit_status);
 }
