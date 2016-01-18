@@ -267,7 +267,6 @@ int main(int argc, char **argv) {
         fprintf(stderr, "Error: Unknown command '%s'\n", args_array[0]);
         exit(255);  
       }
-      // printf("Parent process: child proces pid = %d, cmd = %s\n", pid, args_array[0]);
       // if 'o' is a write end pipe fd, then set fd_isPipe[o] to the pid
       if(fd_isPipe[o] != 0){
         fd_isPipe[o] = (int) pid;
@@ -280,20 +279,6 @@ int main(int argc, char **argv) {
         fd_isPipe[e] = (int) pid;
         close(fd_array[e]);
       }
-
-
-      // // prepare to store the child pid to pid_array
-      // if(pid_array_cur == pid_array_size){
-      //     pid_array_size*=2;
-      //     pid_array = realloc(pid_array, pid_array_size*sizeof(pid_t)); 
-      // }
-      // pid_array[pid_array_cur++] = pid;
-      // // printf("Waiting for process: %s\n", args_array[0]);
-      // while(pid != waitpid(pid, &status, WNOHANG) && !WIFEXITED(status)){
-      //   printf("Child process %d WIFEXITED=%d\n", pid, WIFEXITED(status));
-      // }
-      
-      // printf("Resuming main()...\n");
 
       //record command in wait_output_chain for --wait
       if(wait_info_cur == wait_info_size){
@@ -315,14 +300,7 @@ int main(int argc, char **argv) {
       pid_t returnedPid;
       int j1;
       while((returnedPid = waitpid(0, &status, 0) )!= -1){
-
-
-      // for(j1 = 0; j1 < pid_array_cur; j1++){
-      //   returnedPid = waitpid(pid_array[j1], &status, 0);
-      //   if(returnedPid == 0){ continue; }
-      //   if(returnedPid == -1){ continue;}
-
-       // //WEXITSTATUS returns the exit status of the child.
+       //WEXITSTATUS returns the exit status of the child.
         int waitStatus = WEXITSTATUS(status);
         printf("%d ", waitStatus);
 
@@ -479,7 +457,6 @@ int main(int argc, char **argv) {
 
 //close
     case 28:
-      
       if(verbose){
         printf("--close %s\n", optarg);
       }
@@ -510,42 +487,13 @@ int main(int argc, char **argv) {
 //pause    
     case 27:
       break;
-    // case '?': // ? returns when doesn't recognize option character
-      // break;
 
     default:
         fprintf(stderr, "Error: ?? getopt returned character code 0%o ??\n", c);
     }
-    // Free arguments array for next command
-   // if(args_array_cur != 0){
-     // printf("freeing args_array at c = %d\n", c);
-      // printf("freeing args %s\n", args_array[0]);
       free(args_array);
-    // if(c != 'c'){
-    // }
-    // else{
-    //   printf("NOT freeing args %s\n", args_array[0]);
-    //   printf("keep wait_info[%d].cmd = %s\n", wait_info_cur - 1, (*(wait_info[wait_info_cur-1].cmd))[0]);
-    // }
-
-   // }
   }
 
-  // Prints out extra options that weren't parsed
- // if (optind < argc) {
- //      printf("non-option ARGV-elements: ")
- //      while (optind < argc)
- //          printf("%s ", argv[optind++]);
- //      printf("\n");
- //  }
-
-/*
-  for(j = 0; j != fd_array_cur; j++)
-    printf("fd_array[%d] = %d, addr = %p\n", j, fd_array[j],(void*)&(fd_array[j]));
-  for(;j < fd_array_size; j++)
-    printf("fd_array[%d] = NULL, addr = %p\n",j, (void*)&(fd_array[j]));
-  printf("fd_size = %zu\n", fd_array_size);
-*/
   // Close all used file descriptors
   fd_array_cur--;
   while (fd_array_cur >= 0) {
@@ -553,17 +501,9 @@ int main(int argc, char **argv) {
     	close(fd_array[fd_array_cur]);
   	fd_array_cur--;
   }
-  // Free file descriptor array
-  // printf("freeing fd_array\n");
+  // Free dynamically allocated memory
   free(fd_array);
   free(fd_isPipe);
-  // for(j = 0 ; j < wait_info_cur; j++){
-  //   printf("freeing %s\n",(*(wait_info[j].cmd))[0]);
-  //   free(*(wait_info[j].cmd));
-  // }
-  // printf("freeing wait_info\n");
   free(wait_info);
-  // free(pid_array);
-  // Exit with previously set status
   exit(exit_status);
 }
