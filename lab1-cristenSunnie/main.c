@@ -18,6 +18,15 @@ See README for further information
 
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
+int strIsNum(char* str){
+  int j;
+  for(j = 0; str != NULL && *(str+j) != '\0'; j++) {
+    if (!isdigit(*(str+j))) {
+      return 0;
+    }
+  }
+  return 1;
+}
 // [command] Check if a file descriptor is valid
 int validFd(int fd, int fd_array_cur, int* fd_array){
 	if( fd >= fd_array_cur){	
@@ -44,12 +53,10 @@ int checkOpenError(int fd) {
 int passChecks(char* str, int index, int num_args) {
   int i = 0;
   // checks if is a digit
-  while (str != NULL && *(str+i) != '\0') {
-    if (!isdigit(*(str+i))) {
-      fprintf(stderr, "Error: Incorrect usage of --command. Requires integer argument.\n");
-      return 0;
-    }
-    i++;
+ 
+  if(!strIsNum(str)){
+    fprintf(stderr, "Error: Incorrect usage of --command. Requires integer argument.\n");
+    return 0;  
   }
   // checks if is within number of arguments
   if (index >= num_args) {
@@ -129,15 +136,15 @@ int main(int argc, char **argv) {
   // Verbose can be on or off, automatically set to off
   int verbose = 0;
 
-  //wait 
+  // wait record structure 
   size_t wait_info_size = 2;
   int wait_info_cur = 0;
   struct waitInfo* wait_info = malloc(wait_info_size * sizeof *wait_info);
 
-  // // storing pid.
-  // size_t pid_array_size = 2;
-  // int pid_array_cur = 0;
-  // pid_t* pid_array = malloc(pid_array_size*sizeof(pid_t));
+  // Signal handling.
+
+
+
   // Parse options
   while (1) {
     int option_index = 0;
@@ -474,13 +481,12 @@ int main(int argc, char **argv) {
         printf("--close %s\n", optarg);
       }
       int N = -1;
-      for(j = 0; optarg != NULL && *(optarg+j) != '\0'; j++) {
-        if (!isdigit(*(optarg+j))) {
+      if (!strIsNum(optarg)){
           fprintf(stderr, "Error: Incorrect usage of --close. Requires an integer argument.\n");
           exit_status = MAX(exit_status, 1);
           continue;
-        }
       }
+      
       if(N == -1) 
         break;
       N = atoi(optarg);
@@ -498,7 +504,9 @@ int main(int argc, char **argv) {
       break;
 //profile
     case 22:
-
+      if(verbose){
+        printf("--profile\n");
+      }
       break;
 //abort
     case 23:
