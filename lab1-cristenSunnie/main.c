@@ -281,7 +281,7 @@ int main(int argc, char **argv) {
         fprintf(stderr, "Error: Unknown command '%s'\n", args_array[0]);
         exit(255);  
       }
-      printf("Parent process: child proces pid = %d, cmd = %s\n", pid, args_array[0]);
+      // printf("Parent process: child proces pid = %d, cmd = %s\n", pid, args_array[0]);
       // if 'o' is a write end pipe fd, then set fd_isPipe[o] to the pid
       if(fd_isPipe[o] != 0){
         fd_isPipe[o] = (int) pid;
@@ -327,18 +327,14 @@ int main(int argc, char **argv) {
       int j1;
       for(j1 = 0; j1 < pid_array_cur; j1++){
         // printf("waitpid is waiting...\n");m              
-        printf("pid_array[%d] = %d\n", j1, pid_array[j1]);
-        returnedPid = waitpid(pid_array[j1], &status, WNOHANG);
-        printf("pid_array_cur = %d, j = %d, WNOHANG: pid = %d\n", pid_array_cur, j1, returnedPid);
-        if (!WIFEXITED(status)){
-          returnedPid = waitpid(pid_array[j1], &status, 0);
-        }
+        // printf("pid_array[%d] = %d\n", j1, pid_array[j1]);
+        returnedPid = waitpid(pid_array[j1], &status, 0);
 
         // printf("waitpid returns %d\n", returnedPid);
         // returnedPid = waitpid(WAIT_ANY, &status, WNOHANG);// > 0 || WIFEXITED(status)){
         // printf("returnPid = %d\n", returnedPid);
         
-        if(returnedPid == 0){ printf("returnedPid == 0\n"); continue;}
+        if(returnedPid == 0){ continue; }
         if(returnedPid == -1){ continue;}
 
        // //WEXITSTATUS returns the exit status of the child.
