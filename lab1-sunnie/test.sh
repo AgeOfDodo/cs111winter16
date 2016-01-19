@@ -94,7 +94,7 @@ diff -u $e $c  || { echo "FAIL: error multi pipe operations."; exit 1;}
 echo "original text" > "$c"
 > "$d"
 > "$e"
-./simpsh --rdonly $b --append --wronly $c --wronly d --command 0 1 2 cat b 2>&1 > /dev/null 
+./simpsh --rdonly $b --append --wronly $c --wronly $d --command 0 1 2 cat b 2>&1 > /dev/null 
 cat $c | grep "original text" > /dev/null || { echo "FAIL: --append does not work"; exit 1;} 
 cat $c | grep "hi from file b" > /dev/null || { echo "FAIL: --append does not work"; exit 1;}
 
@@ -109,7 +109,8 @@ cat $e | grep "sort" > /dev/null || { echo "FAIL: --wait: incomplete output"; ex
 cat $e | grep "tr A-Z a-z" > /dev/null || { echo "FAIL: --wait: incomplete output"; exit 1;}
 cat $e | grep "cat" > /dev/null || { echo "FAIL: --wait: incomplete output"; exit 1;}
 
-
+# close
+./simpsh --rdonly $a --wronly $b --wronly $c --close 2 --command 0 1 2 cat 2>&1 | grep "Error: Invalid access to file descriptor" > /dev/null ||  { echo "FAIL: --close does not work"; exit 1;}
 
 
 
