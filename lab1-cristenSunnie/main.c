@@ -14,8 +14,6 @@ See README for further information
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
-
-
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
 int strIsNum(char* str){
@@ -104,12 +102,25 @@ struct waitInfo{
   int end;
 };
 
+void sig_handler(int sig){
+  // printf("sig_handler(%d)\n", sig);
+  fprintf(stderr, "%d caught\n", sig);
+  exit(sig);
+}
+
+void sig_act(int sig, siginfo_t *s, void *arg){
+  fprintf(stdout, "%d caught\n", sig);
+  exit(sig); 
+}
 int main(int argc, char **argv) {
   // c holds return value of getopt_long
   int c;
 
   // j is an iterator for for loops
   int j;
+
+  // N is signal variable.
+  int N;
 
   // status for child process
   int status;
@@ -142,7 +153,13 @@ int main(int argc, char **argv) {
   struct waitInfo* wait_info = malloc(wait_info_size * sizeof *wait_info);
 
   // Signal handling.
-
+  struct sigaction sa;
+  // memset (&sa, '\0', sizeof(sa));
+  sa.sa_sigaction = &sig_act;
+  sa.sa_flags = SA_SIGINFO;
+  // sa.sa_handler = &sig_handler;
+  // restart the system call if possible.
+  // sa.sa_flags = SA_RESTART;
 
 
   // Parse options
@@ -171,7 +188,7 @@ int main(int argc, char **argv) {
         {"pipe",        no_argument,        0,  20 },
  
 // MISCELLANEOUS  
-        {"close",      required_argument,  0,  28 },
+        {"close",      required_argument,   0,  28 },
         {"verbose",     no_argument,        0,  21 },
         {"profile",     no_argument,        0,  22 },
         {"abort",       no_argument,        0,  23 },
@@ -480,15 +497,12 @@ int main(int argc, char **argv) {
       if(verbose){
         printf("--close %s\n", optarg);
       }
-      int N = -1;
+      N = -1;
       if (!strIsNum(optarg)){
           fprintf(stderr, "Error: Incorrect usage of --close. Requires an integer argument.\n");
           exit_status = MAX(exit_status, 1);
           continue;
       }
-      
-      if(N == -1) 
-        break;
       N = atoi(optarg);
       if(!validFd(N, fd_array_cur, fd_array)){
         exit_status = MAX(exit_status, 1);
@@ -515,6 +529,27 @@ int main(int argc, char **argv) {
       break;
 //catch
     case 24:
+      if(verbose){
+        printf("--catch %s\n", optarg);
+      }
+      if (!strIsNum(optarg)){
+          fprintf(stderr, "Error: Incorrect usage of --catch. Requires an integer argument.\n");
+          exit_status = MAX(exit_status, 1);
+          continue;
+      }
+      N = atoi(optarg);
+      // printf ("N = %d\n",);
+      if (sigaction(N, &sa, NULL) < 0){
+        /* Handle error */
+          fprintf(stderr, "Error: Catching signal failure.\n");
+          exit_status = MAX(exit_status, 1);
+          continue;
+      }
+      // Test: --catch 11
+      // //this should cause sig_fault
+      // int *a = NULL;
+      // int b = *a;
+      
       break;
 //ignore
     case 25:
