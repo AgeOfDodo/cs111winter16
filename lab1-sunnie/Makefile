@@ -8,7 +8,7 @@ default: simpsh
 simpsh: main.c 
 	$(CC) main.c -o $@
 
-dist: lab1-CristenAnderson_SunnieSo.tar.gz
+dist: lab1-SunnieSo.tar.gz
 
 submission_files = README main.c Makefile test.sh
 lab1-CristenAnderson_SunnieSo.tar.gz: $(submission_files)
