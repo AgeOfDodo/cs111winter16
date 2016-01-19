@@ -53,6 +53,7 @@ cat $c | grep "Bad file descriptor" > /dev/null || { echo "FAIL: --rdonly: Error
 ./simpsh --rdonly $a --wronly $b --wronly $c --command 0 1 cat - 2>&1 | grep "Error: Incorrect usage of --command. Requires integer argument." > /dev/null || { echo "FAIL: --command: report none digit file descriptor"; exit 1;}
 
 ./simpsh --rdonly $a --wronly $b --wronly $c --command 0 1 2 3 cat - 2>&1 > /dev/null
+# sleep 1
 cat $c | grep "Error: Unknown command"  > /dev/null || { echo "FAIL: --command: report invalid number of arguments"; exit 1; }
 
 ./simpsh --command 0 1 2 echo "hi" 2>&1 | grep "Error: Invalid use of file descriptor" > /dev/null || { echo "FAIL: --command: report invalid use of file descriptor"; exit 1;}
@@ -72,15 +73,13 @@ diff -u $d $e > /dev/null || { echo "FAIL: --verbose: valid output when verbose 
 
 # test cases for lab1b
 
-# pipe should work as expected
+# --pipe 
 echo 'Ac: line 2' >> $a
 echo 'Ab: line 3' >> $a
 echo 'B : hi from file b' > b
 > "$c"
 > "$d"
 > "$e"
-# cat a | sort | cat b - | tr 'A-Z' 'a-z' > c
-
 ./simpsh --verbose  --rdonly $a   --pipe   --pipe   --creat \
 --trunc --wronly $c   --creat --append --wronly $d --command \
 0 2 6 sort   --command 1 4 6 cat $b - --command 3 5 6 tr 'A-Z' 'a-z' 2>&1 > /dev/null
@@ -98,6 +97,18 @@ echo "original text" > "$c"
 ./simpsh --rdonly $b --append --wronly $c --wronly d --command 0 1 2 cat b 2>&1 > /dev/null 
 cat $c | grep "original text" > /dev/null || { echo "FAIL: --append does not work"; exit 1;} 
 cat $c | grep "hi from file b" > /dev/null || { echo "FAIL: --append does not work"; exit 1;}
+
+# wait
+> "$c"
+> "$d"
+> "$e"
+./simpsh --verbose  --rdonly $a   --pipe   --pipe   --creat \
+--trunc --wronly $c   --creat --append --wronly $d --command \
+0 2 6 sort   --command 1 4 6 cat $b - --command 3 5 6 tr 'A-Z' 'a-z' --wait > $e
+cat $e | grep "sort" > /dev/null || { echo "FAIL: --wait: incomplete output"; exit 1;}
+cat $e | grep "tr A-Z a-z" > /dev/null || { echo "FAIL: --wait: incomplete output"; exit 1;}
+cat $e | grep "cat" > /dev/null || { echo "FAIL: --wait: incomplete output"; exit 1;}
+
 
 
 

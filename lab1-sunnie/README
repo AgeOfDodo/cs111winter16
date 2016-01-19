@@ -50,7 +50,8 @@ Lab1b:
 --default,
 --catch,
 --pause
-	Implemented using sigaction() and handler
+	Implemented using sigaction() and handler. Note that for pause, I set it waits for 
+	SIGSEGV signal.
 
 --abort
 	hard coded a segmentation fault.
