@@ -26,12 +26,12 @@ int strIsNum(char* str){
   return 1;
 }
 // [command] Check if a file descriptor is valid
-int validFd(int fd, int fd_array_cur, int* fd_array){
+int validFd(int fd, int fd_array_cur, int** fd_array){
 	if( fd >= fd_array_cur){	
   	fprintf(stderr, "Error: Invalid use of file descriptor %d before initiation.\n", fd);
   	return 0;
   }
-  if(fd_array[fd] == -1){
+  if((*fd_array)[fd] == -1){
     fprintf(stderr, "Error: Invalid access to file descriptor %d.\n", fd);
   	return 0;
   }
@@ -230,7 +230,7 @@ int main(int argc, char **argv) {
       if (optind >= argc) {
         fprintf(stderr, "Error: Invalid number of arguments for --command\n");
         exit_status = MAX(1,exit_status);
-        break;
+        continue;
       }
       //[--wait] Record the location of the command substring in argv for --wait to output later
       int cmd_begin = optind;
@@ -263,7 +263,7 @@ int main(int argc, char **argv) {
       }
 
       //check if i,o,e fd are valid 
-      if(!(validFd(i,fd_array_cur, fd_array) && validFd(o,fd_array_cur, fd_array) && validFd(e,fd_array_cur, fd_array))){  
+      if(!(validFd(i,fd_array_cur, &fd_array) && validFd(o,fd_array_cur, &fd_array) && validFd(e,fd_array_cur, &fd_array))){  
         exit_status = MAX(exit_status, 1);
         continue;
       }
@@ -483,14 +483,13 @@ int main(int argc, char **argv) {
       if(verbose){
         printf("--close %s\n", optarg);
       }
-      N = -1;
       if (!strIsNum(optarg)){
           fprintf(stderr, "Error: Incorrect usage of --close. Requires an integer argument.\n");
           exit_status = MAX(exit_status, 1);
           continue;
       }
       N = atoi(optarg);
-      if(!validFd(N, fd_array_cur, fd_array)){
+      if(!validFd(N, fd_array_cur, &fd_array)){
         exit_status = MAX(exit_status, 1);
         continue;
       }
@@ -613,6 +612,7 @@ int main(int argc, char **argv) {
     default:
         fprintf(stderr, "Error: ?? getopt returned character code 0%o ??\n", c);
     }
+    freeArgs:
       free(args_array);
   }
 
@@ -627,6 +627,6 @@ int main(int argc, char **argv) {
   free(fd_array);
   free(fd_isPipe);
   free(wait_info);
-  printf("EXit with %d\n",exit_status );
+  // printf("EXit with %d\n",exit_status );
   exit(exit_status);
 }
