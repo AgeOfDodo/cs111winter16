@@ -36,7 +36,13 @@ Lab1b:
 
 --pipe
 	The "real" pipe descripters are stored in the same manner as regular file descripters
-	in fd_array. 
+	do in fd_array. In addition, I also declared isPipe array to differentiate a pipe 
+	descripter and file descripter. if fd is a pipe descripter, then isPipe[fd]=1. 
+	Otherwise it is 0. This is needed for --command to check if any of input, output, 
+	error are pipe ends.
 
+--command
+	Using isPipe values, check any of input, output, error are pipe ends. If any of them
+	is pipe end, then close the other end of the pipe as well.
 
 

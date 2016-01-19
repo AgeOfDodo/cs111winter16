@@ -135,12 +135,8 @@ int main(int argc, char **argv) {
   int fd_array_cur = 0;
   int * fd_array = malloc(fd_array_size*sizeof(int));
   // Declare a fd_isPipe.   
-  int * fd_isPipe = malloc(fd_array_size*sizeof(int));/*fd_isPipe[fd] is 1 if fd is read end pipe descripter. 
-                                                        if fd is the write end of the pipe and has not been used, 
-                                                        fd_isPipe[fd] stores the pid of the process that uses it.
-                                                        if the process that uses fd is terminated, fd_isPipe[fd] 
-                                                        will be set to 0.  
-                                                        fd_isPipe[fd] is also 0 for regular file descripters.*/
+  int * fd_isPipe = malloc(fd_array_size*sizeof(int));/*fd_isPipe[fd] is 1 if fd is  pipe descripter.
+                                                        fd_isPipe[fd] is  0 if fd is regular file descripters.*/
 
   // open flag
   int oflag = 0;
@@ -305,19 +301,10 @@ int main(int argc, char **argv) {
         //return to main program if execvp fails
         fprintf(stderr, "Error: Unknown command '%s'\n", args_array[0]);
         exit(255);  
-      }
-      // if 'o' is a write end pipe fd, then set fd_isPipe[o] to the pid
-      if(fd_isPipe[o] != 0){
-        fd_isPipe[o] = (int) pid;
-        close(fd_array[o]);
-      }
-      if(fd_isPipe[i] != 0){
-        close(fd_array[i]);
-      }
-      if(fd_isPipe[e] != 0){
-        fd_isPipe[e] = (int) pid;
-        close(fd_array[e]);
-      }
+       }
+      close(fd_array[i]);
+      close(fd_array[o]);
+      close(fd_array[e]);
 
       //record command in wait_output_chain for --wait
       if(wait_info_cur == wait_info_size){
@@ -476,15 +463,11 @@ int main(int argc, char **argv) {
       }
       int pipefd[2]; //store indices of fd_array
       if(pipe(pipefd)== -1){
-          perror("pipe()");
-//        fprintf(stderr, "Error: fail to create pipe. pipe() returns -1.\n");
+       fprintf(stderr, "Error: fail to create pipe. pipe() returns -1.\n");
       }
-
       // save file descriptor to array
       if (fd_array_cur  + 1 >= fd_array_size) {
         fd_array_size *= 2;
-      // printf("fd_array reallocs %zu\n", fd_array_size);
-       // printf("fd_cur = %d\n", fd_array_cur);
         fd_array = (int*)realloc(fd_array, fd_array_size*sizeof(int)); 
         fd_isPipe = (int*)realloc(fd_isPipe, fd_array_size*sizeof(int));
       }
@@ -528,7 +511,11 @@ int main(int argc, char **argv) {
 //abort
     case 23:
       if(verbose) printf("--abort\n");
-      abort();
+      // abort(); //no, because this is SIGABRT, not SIGSEGV
+
+      //this should cause sig_fault
+      int *a = NULL;
+      int b = *a;
       break;
 //catch
     case 24:
@@ -575,12 +562,29 @@ int main(int argc, char **argv) {
           exit_status = MAX(exit_status, 1);
           continue;
       }
-
-      sleep(10);
+      // //testing purpose
+      // sleep(10);
       
       break;
 //default
     case 26:
+      if(verbose){
+        printf("--default %s\n", optarg);
+      }
+      if (!strIsNum(optarg)){
+          fprintf(stderr, "Error: Incorrect usage of --default. Requires an integer argument.\n");
+          exit_status = MAX(exit_status, 1);
+          continue;
+      }
+      N = atoi(optarg);
+      sa.sa_handler = SIG_DFL;
+      sa.sa_flags = 0;
+      if (sigaction(N, &sa, NULL) < 0){
+        /* Handle error */
+          fprintf(stderr, "Error: fail to handle default %d.\n",N);
+          exit_status = MAX(exit_status, 1);
+          continue;
+      }
       break;
 //pause    
     case 27:
