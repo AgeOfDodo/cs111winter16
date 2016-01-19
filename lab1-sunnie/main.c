@@ -558,6 +558,26 @@ int main(int argc, char **argv) {
       break;
 //ignore
     case 25:
+      if(verbose){
+        printf("--ignore %s\n", optarg);
+      }
+      if (!strIsNum(optarg)){
+          fprintf(stderr, "Error: Incorrect usage of --ignore. Requires an integer argument.\n");
+          exit_status = MAX(exit_status, 1);
+          continue;
+      }
+      N = atoi(optarg);
+      sa.sa_handler = SIG_IGN;
+      sa.sa_flags = 0;
+      if (sigaction(N, &sa, NULL) < 0){
+        /* Handle error */
+          fprintf(stderr, "Error: fail to handle ignore %d.\n",N);
+          exit_status = MAX(exit_status, 1);
+          continue;
+      }
+
+      sleep(10);
+      
       break;
 //default
     case 26:
