@@ -8,11 +8,11 @@
 
 # tmp files
 # exit if fails to create files
-a=/tmp/a || exit 1
-b=/tmp/b || exit 1
-c=/tmp/c || exit 1
-d=/tmp/d || exit 1
-e=/tmp/e || exit 1
+a=/tmp/cs111_sunnie_a || exit 1
+b=/tmp/cs111_sunnie_b || exit 1
+c=/tmp/cs111_sunnie_c || exit 1
+d=/tmp/cs111_sunnie_d || exit 1
+e=/tmp/cs111_sunnie_e || exit 1
 > "$a"
 > "$b"
 > "$c"
@@ -62,11 +62,11 @@ cat $c | grep "Error: Unknown command"  > /dev/null || { echo "FAIL: --command: 
 # --verbose
 
 ./simpsh --verbose --rdonly $a --wronly $b --wronly $c --command 0 1 2 cat - > $d
-echo '--rdonly /tmp/a ' > $e; echo '--wronly /tmp/b ' >> $e; echo '--wronly /tmp/c ' >> $e; echo '--command 0 1 2 cat - ' >> $e
+echo '--rdonly /tmp/cs111_sunnie_a ' > $e; echo '--wronly /tmp/cs111_sunnie_b ' >> $e; echo '--wronly /tmp/cs111_sunnie_c ' >> $e; echo '--command 0 1 2 cat - ' >> $e
 diff -u $d $e > /dev/null || { echo "FAIL: --verbose: valid output when verbose is in the beginning"; exit 1;}
 
 ./simpsh --rdonly $a --wronly $b --verbose --wronly $c --command 0 1 2 cat - > $d
-echo '--wronly /tmp/c ' > $e; echo '--command 0 1 2 cat - ' >> $e
+echo '--wronly /tmp/cs111_sunnie_c ' > $e; echo '--command 0 1 2 cat - ' >> $e
 diff -u $d $e > /dev/null || { echo "FAIL: --verbose: valid output when verbose is in the middle of arguments"; exit 1;}
 
 ####################################################
