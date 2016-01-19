@@ -5,6 +5,7 @@ Sunnie So <704430286>
 
 Lab 1
 
+----------------------------------------------------------------------
 This submission is for lab 1a, which is the first part of lab 1.
 
 It can be built using make, and run using ./simpsh 
@@ -43,6 +44,16 @@ Lab1b:
 
 --command
 	Using isPipe values, check any of input, output, error are pipe ends. If any of them
-	is pipe end, then close the other end of the pipe as well.
+	is pipe end, then close the other end of the pipe as well. 
 
+--ignore,
+--default,
+--catch,
+--pause
+	Implemented using sigaction() and handler
 
+--abort
+	hard coded a segmentation fault.
+-----------------------------------------------------------------------
+
+Lab1c: To be continue...
