@@ -2,7 +2,7 @@
 
 CC = gcc
 #CFLAGS =
-DISTDIR=lab1-CristenAnderson_SunnieSo
+DISTDIR=lab1-SunnieSo
 default: simpsh
 
 simpsh: main.c 
@@ -11,7 +11,7 @@ simpsh: main.c
 dist: lab1-SunnieSo.tar.gz
 
 submission_files = README main.c Makefile test.sh
-lab1-CristenAnderson_SunnieSo.tar.gz: $(submission_files)
+lab1-SunnieSo.tar.gz: $(submission_files)
 	tar -czf $@ --transform='s,^,$(DISTDIR)/,' $(submission_files)  
 
 check: 
