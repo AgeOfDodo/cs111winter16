@@ -102,15 +102,18 @@ struct waitInfo{
   int end;
 };
 
-void sig_handler(int sig){
-  // printf("sig_handler(%d)\n", sig);
-  fprintf(stderr, "%d caught\n", sig);
-  exit(sig);
-}
+// void sig_handler(int sig){
+//   // printf("sig_handler(%d)\n", sig);
+//   fprintf(stderr, "%d caught\n", sig);
+//   exit(sig);
+// }
 
-void sig_act(int sig, siginfo_t *s, void *arg){
-  fprintf(stdout, "%d caught\n", sig);
+void catch_handler(int sig, siginfo_t *s, void *arg){
+  fprintf(stderr, "%d caught\n", sig);
   exit(sig); 
+}
+void pause_handler(int sig, siginfo_t *s, void *arg){
+  fprintf(stderr, "pause\n");
 }
 int main(int argc, char **argv) {
   // c holds return value of getopt_long
@@ -154,9 +157,9 @@ int main(int argc, char **argv) {
 
   // Signal handling.
   struct sigaction sa;
-  // memset (&sa, '\0', sizeof(sa));
-  sa.sa_sigaction = &sig_act;
-  sa.sa_flags = SA_SIGINFO;
+  // // memset (&sa, '\0', sizeof(sa));
+  // sa.sa_sigaction = &sig_act;
+  // sa.sa_flags = SA_SIGINFO;
   // sa.sa_handler = &sig_handler;
   // restart the system call if possible.
   // sa.sa_flags = SA_RESTART;
@@ -538,13 +541,15 @@ int main(int argc, char **argv) {
           continue;
       }
       N = atoi(optarg);
-      // printf ("N = %d\n",);
+      sa.sa_sigaction = &catch_handler;
+      sa.sa_flags = SA_SIGINFO;
       if (sigaction(N, &sa, NULL) < 0){
         /* Handle error */
-          fprintf(stderr, "Error: Catching signal failure.\n");
+          fprintf(stderr, "Error: fail to handle catch %d.\n",N);
           exit_status = MAX(exit_status, 1);
           continue;
       }
+      
       // Test: --catch 11
       // //this should cause sig_fault
       // int *a = NULL;
@@ -559,6 +564,26 @@ int main(int argc, char **argv) {
       break;
 //pause    
     case 27:
+      if(verbose){
+        printf("--pause\n");
+      }
+
+      sa.sa_sigaction = &pause_handler;
+      sa.sa_flags = SA_SIGINFO;
+      // if (sigaction(SIGINFO, &sa, NULL) < 0){
+      //   /* Handle error */
+      //     fprintf(stderr, "Error: fail to handle pause\n");
+      //     exit_status = MAX(exit_status, 1);
+      //     continue;
+      // }
+      if (sigaction(SIGSEGV, &sa, NULL) < 0){
+        /* Handle error */
+          fprintf(stderr, "Error: fail to handle pause\n");
+          exit_status = MAX(exit_status, 1);
+          continue;
+      }
+      pause();
+
       break;
 
     default:
