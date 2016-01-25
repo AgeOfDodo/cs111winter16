@@ -50,11 +50,11 @@ Lab1b:
 --default,
 --catch,
 --pause
-	Implemented using sigaction() and handler. Note that for pause, I set it waits for 
-	SIGSEGV signal.
+	Implemented using sigaction() and handler. Note that for pause, user should only be 
+	able to resume it from output the program.
 
 --abort
-	hard coded a segmentation fault.
+	use raise() to signal SIGSESV.
 -----------------------------------------------------------------------
 
 Lab1c: To be continue...

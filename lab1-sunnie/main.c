@@ -138,6 +138,9 @@ int main(int argc, char **argv) {
   int * fd_isPipe = malloc(fd_array_size*sizeof(int));/*fd_isPipe[fd] is 1 if fd is  pipe descripter.
                                                         fd_isPipe[fd] is  0 if fd is regular file descripters.*/
 
+  // abort flag
+  int ignoreAbort = 0;
+
   // open flag
   int oflag = 0;
   char oflag_str[1000];
@@ -511,10 +514,12 @@ int main(int argc, char **argv) {
     case 23:
       if(verbose) printf("--abort\n");
       // abort(); //no, because this is SIGABRT, not SIGSEGV
-
+      //if --ignore 
+      if(ignoreAbort) break;
       //this should cause sig_fault
-      int *a = NULL;
-      int b = *a;
+      raise(11);
+      // int *a = NULL;
+      // int b = *a;
       break;
 //catch
     case 24:
@@ -553,6 +558,8 @@ int main(int argc, char **argv) {
           continue;
       }
       N = atoi(optarg);
+      if(N == 11)
+        ignoreAbort = 1;
       sa.sa_handler = SIG_IGN;
       sa.sa_flags = 0;
       if (sigaction(N, &sa, NULL) < 0){
@@ -591,20 +598,20 @@ int main(int argc, char **argv) {
         printf("--pause\n");
       }
 
-      sa.sa_sigaction = &pause_handler;
-      sa.sa_flags = SA_SIGINFO;
+      // sa.sa_sigaction = &pause_handler;
+      // sa.sa_flags = SA_SIGINFO;
       // if (sigaction(SIGINFO, &sa, NULL) < 0){
       //   /* Handle error */
       //     fprintf(stderr, "Error: fail to handle pause\n");
       //     exit_status = MAX(exit_status, 1);
       //     continue;
+      // // }
+      // if (sigaction(SIGSEGV, &sa, NULL) < 0){
+      //   /* Handle error */
+      //     fprintf(stderr, "Error: fail to handle pause\n");
+      //     exit_status = MAX(exit_status, 1);
+      //     continue;
       // }
-      if (sigaction(SIGSEGV, &sa, NULL) < 0){
-        /* Handle error */
-          fprintf(stderr, "Error: fail to handle pause\n");
-          exit_status = MAX(exit_status, 1);
-          continue;
-      }
       pause();
 
       break;
