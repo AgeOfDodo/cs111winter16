@@ -1,4 +1,5 @@
-/* CS111 Winter 2016 Lab1a
+/* CS111 Winter 2016 Lab1b DESIGN PROBLEM
+
 See README for further information
  */
 
