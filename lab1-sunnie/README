@@ -3,25 +3,6 @@ README
 CS 111 Operating Systems Principles, Winter 2016
 Sunnie So <704430286>
 
-Lab 1
-
-----------------------------------------------------------------------
-This submission is for lab 1a, which is the first part of lab 1.
-
-It can be built using make, and run using ./simpsh 
-
-We have implemented the --wronly, --rdonly, --command, and 
---verbose flags using the appropriate commands as outlined
-in the specification on the class website. The --wait command
-is in progress but not currently working.
-
-Our testing is in test.sh, which can be invoked using "make check".
-
-We implemented the Makefile such that the user can use "make", "make check",
-"make clean", "make dist" as specified in the spec. There are currently
-no tests run for "make dist". 
-
-----------------------------------------------------------------------
 
 Lab1b:
 
@@ -34,27 +15,16 @@ Lab1b:
 	I dynamically constructed an array of "waitInfo" to keep track of all "waitInfo" 
 	data. When a child process is created, the parent process records the corresponding
 	values into a new "waitInfo" in the waitInfo array.
-
---pipe
-	The "real" pipe descripters are stored in the same manner as regular file descripters
-	do in fd_array. In addition, I also declared isPipe array to differentiate a pipe 
-	descripter and file descripter. if fd is a pipe descripter, then isPipe[fd]=1. 
-	Otherwise it is 0. This is needed for --command to check if any of input, output, 
-	error are pipe ends.
-
---command
-	Using isPipe values, check any of input, output, error are pipe ends. If any of them
-	is pipe end, then close the other end of the pipe as well. 
-
---ignore,
---default,
---catch,
---pause
-	Implemented using sigaction() and handler. Note that for pause, user should only be 
-	able to resume it from output the program.
-
---abort
-	use raise() to signal SIGSESV.
 -----------------------------------------------------------------------
+Design Problem
+Question: "Extend the shell to wait for individual subcommands, instead of waiting for them all to finish.""
 
+Use the same wait_info structure.
+In this version, --wait takes one argument N, which is the "command descripter". 
+This command descripter is just the index of the wait_info array. The program will find the corrsponding wait_info
+and print the info.
+
+If the user still wanna waits for all, then the user can enter "--wait all"
+
+-----------------------------------------------------------------------
 Lab1c: To be continue...
