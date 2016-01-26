@@ -197,7 +197,8 @@ int main(int argc, char **argv) {
         {"catch",       required_argument,  0,  24 },
         {"ignore",      required_argument,  0,  25 },
         {"default",     required_argument,  0,  26 },
-        {"pause",       no_argument,        0,  27 }
+        {"pause",       no_argument,        0,  27 },
+        {0,0,0,0}
         
     };
 
@@ -299,16 +300,28 @@ int main(int argc, char **argv) {
         close(fd_array[i]);
         close(fd_array[o]);
         close(fd_array[e]);
-
         execvp(args_array[0], args_array);
         //return to main program if execvp fails
         fprintf(stderr, "Error: Unknown command '%s'\n", args_array[0]);
+
         exit(255);  
        }
-      close(fd_array[i]);
-      close(fd_array[o]);
-      close(fd_array[e]);
+       if(fd_isPipe[i] != 0){
+          close(fd_array[i]);
+          fd_array[i] = -1;
+       }
 
+        if(fd_isPipe[o] != 0){
+          close(fd_array[o]);
+          fd_array[i] = -1;
+        }
+        if(fd_isPipe[e] != 0){
+          close(fd_array[e]);
+          fd_array[i] = -1;
+        }
+      // close(fd_array[i]);
+      // close(fd_array[o]);
+      // close(fd_array[e]);
       //record command in wait_output_chain for --wait
       if(wait_info_cur == wait_info_size){
           wait_info_size *=2;
@@ -598,20 +611,6 @@ int main(int argc, char **argv) {
         printf("--pause\n");
       }
 
-      // sa.sa_sigaction = &pause_handler;
-      // sa.sa_flags = SA_SIGINFO;
-      // if (sigaction(SIGINFO, &sa, NULL) < 0){
-      //   /* Handle error */
-      //     fprintf(stderr, "Error: fail to handle pause\n");
-      //     exit_status = MAX(exit_status, 1);
-      //     continue;
-      // // }
-      // if (sigaction(SIGSEGV, &sa, NULL) < 0){
-      //   /* Handle error */
-      //     fprintf(stderr, "Error: fail to handle pause\n");
-      //     exit_status = MAX(exit_status, 1);
-      //     continue;
-      // }
       pause();
 
       break;
@@ -619,8 +618,12 @@ int main(int argc, char **argv) {
     default:
         fprintf(stderr, "Error: ?? getopt returned character code 0%o ??\n", c);
     }
-    freeArgs:
-      free(args_array);
+    // freeArgs:
+    // for(j = 0; j != args_array_cur; j++){
+    //   printf("freeing args_array %s\n", args_array[j]);
+    // }
+    free(args_array);
+    // printf("done freeing\n");
   }
 
   // Close all used file descriptors
