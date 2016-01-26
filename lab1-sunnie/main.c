@@ -328,7 +328,7 @@ int main(int argc, char **argv) {
       }
 
       //if spedified all, then do the original version.
-      if(optarg == "all"){
+      if(!strcmp(optarg, "all")){
         pid_t returnedPid;
         int j1;
 
@@ -359,10 +359,16 @@ int main(int argc, char **argv) {
           // command descripter
           int cmdd = atoi(optarg);
           // find the corresponding command struct in wait_info array
+          // printf("cmdd = %d, wait_info_cur = %d\n",cmdd, wait_info_cur);
           if (cmdd >= wait_info_cur){
             fprintf(stderr, "Error: Design Problem: invalid command descripter.\n");
+            exit_status = MAX(exit_status, 1);
+            break;
           }
-          int exitval = waitpid(wait_info[cmdd].childPid, &status, 0);
+          // printf("wait_info[cmdd].childPid=%d\n", wait_info[cmdd].childPid);
+          waitpid(wait_info[cmdd].childPid, &status, 0);
+          int waitStatus = WEXITSTATUS(status);
+          printf("%d ",waitStatus);
           
           for (j = wait_info[cmdd].begin; j != wait_info[cmdd].end; j++) {
             printf("%s ", argv[j]);
