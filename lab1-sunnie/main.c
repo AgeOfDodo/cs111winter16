@@ -1,5 +1,7 @@
 /* CS111 Winter 2016 Lab1b DESIGN PROBLEM
 
+Extend the shell to wait for individual subcommands, instead of waiting for them all to finish.
+
 See README for further information
  */
 
@@ -168,7 +170,7 @@ int main(int argc, char **argv) {
     static struct option long_options[] = {
 // SUBCOMMAND
     	  {"command",     required_argument,  0,  'c' },
-        {"wait",        no_argument,        0,  'z' },
+        {"wait",        required_argument,  0,  'z' },
 // FILE FLAGS
         {"append",      no_argument,        0,  6 },
         {"cloexec",     no_argument,        0,  7 },
@@ -319,37 +321,57 @@ int main(int argc, char **argv) {
       break;
     }
 //wait
+    // DESIGN PROBLEM EXTENDED VERSION.
     case 'z': {
       if (verbose){
-        printf("--wait\n");
+        printf("--wait %s\n", optarg);
       }
-      //wait any child process to finish. 0 is for blocking.
-      pid_t returnedPid;
-      int j1;
-      while((returnedPid = waitpid(0, &status, 0) )!= -1){
-       //WEXITSTATUS returns the exit status of the child.
-        int waitStatus = WEXITSTATUS(status);
-        printf("%d ", waitStatus);
 
-        //the main program needs to return the with biggest value of exit status.
-        // if (waitStatus > exit_status) {
-        //   exit_status = waitStatus;
-        // }
-        exit_status = MAX(exit_status, waitStatus);
-        //find the corresponding wait_info
-        for(j = 0 ; j != wait_info_cur; j++){
-          if(returnedPid == (wait_info[j]).childPid)
-            break;
+      //if spedified all, then do the original version.
+      if(optarg == "all"){
+        pid_t returnedPid;
+        int j1;
+
+        while((returnedPid = waitpid(0, &status, 0) )!= -1){
+         //WEXITSTATUS returns the exit status of the child.
+          int waitStatus = WEXITSTATUS(status);
+          printf("%d ", waitStatus);
+
+          exit_status = MAX(exit_status, waitStatus);
+          //find the corresponding wait_info
+          for(j = 0 ; j != wait_info_cur; j++){
+            if(returnedPid == (wait_info[j]).childPid)
+              break;
+          }
+          //print out the corresponding command lines from wait_info data structure.
+          int j1= j;
+          for (j = wait_info[j1].begin; j != wait_info[j1].end; j++) {
+            printf("%s ", argv[j]);
+          }
+          printf("\n");
         }
-        //print out the corresponding command lines from wait_info data structure.
-        int j1= j;
-        for (j = wait_info[j1].begin; j != wait_info[j1].end; j++) {
-          printf("%s ", argv[j]);
-        }
-        printf("\n");
+
+      }else{
+          if(!strIsNum(optarg)){
+            fprintf(stderr, "Error: Design Problem: --wait argument should be a valid number.\n");
+            exit_status = MAX(exit_status,1);
+          }
+          // command descripter
+          int cmdd = atoi(optarg);
+          // find the corresponding command struct in wait_info array
+          if (cmdd >= wait_info_cur){
+            fprintf(stderr, "Error: Design Problem: invalid command descripter.\n");
+          }
+          int exitval = waitpid(wait_info[cmdd].childPid, &status, 0);
+          
+          for (j = wait_info[cmdd].begin; j != wait_info[cmdd].end; j++) {
+            printf("%s ", argv[j]);
+          }
+          printf("\n");
       }
       break;
     }
+    
      
 //append
     case 6:
@@ -624,6 +646,9 @@ int main(int argc, char **argv) {
     	close(fd_array[fd_array_cur]);
   	fd_array_cur--;
   }
+
+
+
   // Free dynamically allocated memory
   free(fd_array);
   free(fd_isPipe);
