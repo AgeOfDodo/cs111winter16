@@ -6,7 +6,7 @@ Sunnie So <704430286>
 Lab 1
 
 ----------------------------------------------------------------------
-This submission is for lab 1a, which is the first part of lab 1.
+Lab 1a:
 
 It can be built using make, and run using ./simpsh 
 
@@ -57,4 +57,6 @@ Lab1b:
 	use raise() to signal SIGSESV.
 -----------------------------------------------------------------------
 
-Lab1c: To be continue...
+Lab1c: 
+
+To be continue...

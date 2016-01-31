@@ -1,5 +1,9 @@
 /* CS111 Winter 2016 Lab1a
 See README for further information
+
+TODO:
+action handler: change printf to write or whatever
+profile
  */
 
 #include <stdlib.h>
@@ -14,7 +18,26 @@ See README for further information
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
+#include <sys/resource.h>
+#include <sys/time.h>
+#include <math.h>
+
 #define MAX(a,b) (((a)>(b))?(a):(b))
+
+// void timeUsage(int who, struct rusage &usage){
+//   ret = getrusage(who, &usage);
+
+// }
+
+// void printProfile(int usageFlag, struct rusage &usage){
+//     getrusage(RUSAGE_SELF, &usage);
+//     // long long end= (long long)usage.ru_utime.tv_sec*pow(10, 6) + (long long)usage.u_utime.tv_usec;
+//     long long endu = (long long )(usage.ru_utime.tv_sec*pow(10, 6) +  usage.ru_utime.tv_usec);
+//     long long ends = (long long )(usage.ru_stime.tv_sec*pow(10, 6) +  usage.ru_stime.tv_usec);
+//     printf("endu = %lld\n", ends );
+//     printf("[profile] Total Main: user CPU time => %lld us\t system CPU time => %lld us\n",
+//       endu - beginu, ends - begins);
+// }
 
 int strIsNum(char* str){
   int j;
@@ -116,8 +139,41 @@ void pause_handler(int sig, siginfo_t *s, void *arg){
   fprintf(stderr, "pause\n");
 }
 int main(int argc, char **argv) {
+
+  int profile = 0;
+  int who = RUSAGE_SELF;
+
+
+
+  struct rusage usage_start;
+  struct rusage usage_end;
+  struct rusage children;    
+
+  //for --wait, collect the time usage from all waited child processes
+  long long childrenTimeu = 0;
+  long long childrenTimes = 0;
+  //the beginning of the while loop
+  long long start_u;
+  long long start_s;
+  //the beginning of the whole program
+  long long begin_u;
+  long long begin_s;
+
+  int ret;
+
+  //[profile]
+  //get the beginning usage 
+  getrusage(RUSAGE_SELF, &usage_start);
+  begin_u = (long long )usage_start.ru_utime.tv_sec*pow(10, 6) + (long long )usage_start.ru_utime.tv_usec;
+  begin_s = (long long )usage_start.ru_stime.tv_sec*pow(10, 6) + (long long )usage_start.ru_stime.tv_usec;
+  //printf("[profile] begin = %lld\n", beginu );
+  
+  // ret = getrusage(who, &usage);
+
   // c holds return value of getopt_long
   int c;
+
+
 
   // j is an iterator for for loops
   int j;
@@ -145,7 +201,10 @@ int main(int argc, char **argv) {
   int oflag = 0;
   char oflag_str[1000];
   strcpy(oflag_str, "");
-
+  // [profile]
+  // if the oflag is not 0, it means that we are currently at a potential beginning of file flag serie
+  // (ex. --append --create --rdonly . we only wanna get get usage right before --append and within the --rdonly clause) 
+  
   // Verbose can be on or off, automatically set to off
   int verbose = 0;
 
@@ -163,9 +222,19 @@ int main(int argc, char **argv) {
   // restart the system call if possible.
   // sa.sa_flags = SA_RESTART;
 
+  //int profile_file_flags = 0;
 
   // Parse options
   while (1) {
+
+    if(profile && (oflag==0)){
+      getrusage(RUSAGE_SELF,&usage_start);
+
+      start_u = (long long ) (usage_start.ru_utime.tv_sec*pow(10, 6) +  usage_start.ru_utime.tv_usec);
+      start_s = (long long ) (usage_start.ru_stime.tv_sec*pow(10, 6) +  usage_start.ru_stime.tv_usec);        
+
+      // printf("[profile] begins = %lld\n", (long long) start_s);
+    }
     int option_index = 0;
     static struct option long_options[] = {
 // SUBCOMMAND
@@ -218,6 +287,11 @@ int main(int argc, char **argv) {
     
 //command
     case 'c': { // command (format: --command i o e cmd args_array)
+      //[profile]
+      //On piazza, it says that we only time whatever happens in the parent process 
+      if(profile && (oflag == 0)){ 
+        getrusage(RUSAGE_SELF, &usage_start);
+      }
       int i, o, e; // stdin, stdout, stderr
 
       //store the file descripter numbers and check for errors
@@ -330,7 +404,18 @@ int main(int argc, char **argv) {
       wait_info[wait_info_cur].childPid = pid;
       wait_info[wait_info_cur].begin = cmd_begin;
       wait_info[wait_info_cur++].end = cmd_end;
-      
+
+      //[profile]
+      // //On piazza, it says that we only time whatever happens in the parent process     
+      if(profile){
+        getrusage(RUSAGE_SELF, &usage_end);
+        // long long end= (long long)usage.ru_utime.tv_sec*pow(10, 6) + (long long)usage.u_utime.tv_usec;
+        long long endu = (long long ) (usage_end.ru_utime.tv_sec*pow(10, 6) +  usage_end.ru_utime.tv_usec);
+        long long ends = (long long ) (usage_end.ru_stime.tv_sec*pow(10, 6) +  usage_end.ru_stime.tv_usec);
+        // printf("endu = %lld\n", ends );
+        printf("[profile] user CPU time => %lld us\t system CPU time => %lld us\n",
+        endu - start_u, ends - start_s);
+      }
       break;
     }
 //wait
@@ -338,6 +423,8 @@ int main(int argc, char **argv) {
       if (verbose){
         printf("--wait\n");
       }
+
+
       //wait any child process to finish. 0 is for blocking.
       pid_t returnedPid;
       int j1;
@@ -347,9 +434,6 @@ int main(int argc, char **argv) {
         printf("%d ", waitStatus);
 
         //the main program needs to return the with biggest value of exit status.
-        // if (waitStatus > exit_status) {
-        //   exit_status = waitStatus;
-        // }
         exit_status = MAX(exit_status, waitStatus);
         //find the corresponding wait_info
         for(j = 0 ; j != wait_info_cur; j++){
@@ -362,6 +446,21 @@ int main(int argc, char **argv) {
           printf("%s ", argv[j]);
         }
         printf("\n");
+
+
+      }
+        //[profile] 
+        // on Piazza, Zhaoxing said:  you time 
+        // (1) whatever happens in the parent process and 
+        // (2) sum of all child processes you have waited or report each child process separately.
+      if(profile){
+        getrusage(RUSAGE_CHILDREN, &children);
+        // long long end= (long long)usage.ru_utime.tv_sec*pow(10, 6) + (long long)usage.u_utime.tv_usec;
+        childrenTimeu = (long long ) (children.ru_utime.tv_sec*pow(10, 6) +  children.ru_utime.tv_usec);
+        childrenTimes = (long long ) (children.ru_stime.tv_sec*pow(10, 6) +  children.ru_stime.tv_usec);
+        // printf("endu = %lld\n", ends );
+        printf("[profile] Child Processes Total...\n\t  user CPU time => %lld us\t system CPU time => %lld us\n",
+        childrenTimeu , childrenTimes );
       }
       break;
     }
@@ -461,6 +560,18 @@ int main(int argc, char **argv) {
 
       //clean oflag content.
       oflag = 0;
+      if(profile){
+        long long start_u = (long long ) (usage_start.ru_utime.tv_sec*pow(10, 6) +  usage_start.ru_utime.tv_usec);
+        long long start_s = (long long ) (usage_start.ru_stime.tv_sec*pow(10, 6) +  usage_start.ru_stime.tv_usec);        
+        getrusage(RUSAGE_SELF, &usage_end);
+        // long long end= (long long)usage.ru_utime.tv_sec*pow(10, 6) + (long long)usage.u_utime.tv_usec;
+        long long endu = (long long ) (usage_end.ru_utime.tv_sec*pow(10, 6) +  usage_end.ru_utime.tv_usec);
+        long long ends = (long long ) (usage_end.ru_stime.tv_sec*pow(10, 6) +  usage_end.ru_stime.tv_usec);
+        // printf("endu = %lld\n", ends );
+        printf("[profile] user CPU time => %lld us\t system CPU time => %lld us\n",
+        endu - start_u, ends - start_s);
+      }
+
       break;   
 //pipe
     case 20:
@@ -522,6 +633,7 @@ int main(int argc, char **argv) {
       if(verbose){
         printf("--profile\n");
       }
+      profile = 1;
       break;
 //abort
     case 23:
@@ -637,6 +749,19 @@ int main(int argc, char **argv) {
   free(fd_array);
   free(fd_isPipe);
   free(wait_info);
+
+  //[profile] 
+  // get the ending usage of the whole program. Subtract this with the beginning usage data.
+  if(profile){
+
+    getrusage(RUSAGE_SELF, &usage_end);
+    // long long end= (long long)usage.ru_utime.tv_sec*pow(10, 6) + (long long)usage.u_utime.tv_usec;
+    long long endu = (long long )(usage_end.ru_utime.tv_sec*pow(10, 6) +  usage_end.ru_utime.tv_usec);
+    long long ends = (long long )(usage_end.ru_stime.tv_sec*pow(10, 6) +  usage_end.ru_stime.tv_usec);
+    printf("endu = %lld\n", ends );
+    printf("[profile] Total...\n\t  user CPU time => %lld us\t system CPU time => %lld us\n",
+      endu - begin_u + childrenTimeu, ends - begin_s + childrenTimes);
+  }
   // printf("EXit with %d\n",exit_status );
   exit(exit_status);
 }
