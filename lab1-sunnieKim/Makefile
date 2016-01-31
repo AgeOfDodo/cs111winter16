@@ -21,4 +21,4 @@ check:
 
 
 clean:
-	rm -f *.o *.tar.gz simpsh
+	rm -f *.o *.tar.gz simpsh prime
