@@ -6,29 +6,8 @@ Kimberly Svatos <TODO!!!!>
 
 This is the readme file for lab1c
 
-
-Benchmarks:
-For all benchmark, we created some big files using the following command:
-
-dd bs=8M count=16 </dev/urandom >a
-dd bs=8M count=16 </dev/urandom >b
-dd bs=8M count=16 </dev/urandom >c
-dd bs=8M count=16 </dev/urandom >d
-
-
-
-benchmark for simpsh:
-./simpsh --verbose --profile --rdonly a --pipe --trunc --rdonly b --trunc --rsync --wronly c --append --wronly d --command 0 2 5 sort - --command 1 4 5 cat - b --wait
-
-benchmark for execline:
-
-benchmark for shell: 
-
-Result and Comparison:
-
-
 ---------------------------------
-Notes on implementation of simpsh:
+1. Notes on implementation of simpsh:
 
 the unit of time in our output is in microseconds.
 
@@ -38,3 +17,53 @@ When there is file flags(trunc, creat ...etc) appended before file options(rdonl
 
 in --command, we ouput only the time usage of the main process.
 in --wait, we output the time usage of the sum of all child processes.
+
+------------------------------------
+2. Benchmarks:
+
+For all benchmark, we created some big files using the following command:
+
+dd bs=8M count=16 </dev/urandom >a
+dd bs=8M count=16 </dev/urandom >b
+dd bs=8M count=16 </dev/urandom >c
+dd bs=8M count=16 </dev/urandom >d
+
+//note: the test cases for simpsh, execline, and shell are essentially the same just in different format.
+
+We created a program "prime" that takes an number argument and find the next prime number. This is made so that we can compare primarly the user CPU time in one of our benchmark (#2). prime.c file is included in the folder and "prime" executable file can be generated with make.
+
+benchmark for shell: 
+# 1
+time sort a | cat b - | tr 'A-Z' 'a-z' > c
+# 2
+time ./prime 5004424555403
+
+
+benchmark for simpsh:
+# 1
+./simpsh --verbose  --profile --rdonly a --pipe --pipe --wronly c --wronly d --command 0 2 6 sort - --command 1 4 6 cat b - --command 3 5 6 tr 'A-Z' 'a-z' --wait
+# 2
+./simpsh --verbose --profile --rdonly a --append --wronly b --append --wronly c --command 0 1 2 ./prime 5004424555403 --wait
+
+
+benchmark for execline:
+//TODO
+
+
+----------------------------------
+3. Result and Comparison:
+
+please refer to lab1cResults.pdf
+
+//TEMP: 
+https://docs.google.com/document/d/1zg3HsO8FA2kHsMLb1Z5nu3nZJRku7aP4nN8DZ0x1e-w/edit?usp=sharing
+
+
+--------------------------------
+4. Data Collection
+we collect user CPU time and kernel system CPU time
+
+--------------------------------
+5. Conclusion
+
+Our results for simpsh and bash are really close. This imply that simpsh is about as efficient as bash.

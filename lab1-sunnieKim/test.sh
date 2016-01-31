@@ -116,5 +116,6 @@ cat $e | grep "cat" > /dev/null || { echo "FAIL: --wait: incomplete output"; exi
 ./simpsh --rdonly $a --wronly $b --wronly $c --ignore 11 --abort --close 2 --command 0 1 2 cat 2>&1 | grep "Error: Invalid access to file descriptor" > /dev/null ||  { echo "FAIL: --ignore failed to ignore --abort"; exit 1;}
 
 
+echo "All tests succeeded"
 exit 0
 
