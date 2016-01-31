@@ -4,12 +4,37 @@ CS 111 Operating Systems Principles, Winter 2016
 Sunnie So <704430286>
 Kimberly Svatos <TODO!!!!>
 
-this is the readme file for lab1c
+This is the readme file for lab1c
+
+
+Benchmarks:
+For all benchmark, we created some big files using the following command:
+
+dd bs=8M count=16 </dev/urandom >a
+dd bs=8M count=16 </dev/urandom >b
+dd bs=8M count=16 </dev/urandom >c
+dd bs=8M count=16 </dev/urandom >d
+
+
 
 benchmark for simpsh:
+./simpsh --verbose --profile --rdonly a --pipe --trunc --rdonly b --trunc --rsync --wronly c --append --wronly d --command 0 2 5 sort - --command 1 4 5 cat - b --wait
 
 benchmark for execline:
 
 benchmark for shell: 
 
 Result and Comparison:
+
+
+---------------------------------
+Notes on implementation of simpsh:
+
+the unit of time in our output is in microseconds.
+
+To obtain the CPU time usage of a code block, we call getrusage() at the beginning the block and at the end of the block. Then we got the difference of the two in user time and in system time.
+
+When there is file flags(trunc, creat ...etc) appended before file options(rdonly, wronly, rdwr), we calculated them together and generate one line of output.
+
+in --command, we ouput only the time usage of the main process.
+in --wait, we output the time usage of the sum of all child processes.

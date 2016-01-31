@@ -561,8 +561,6 @@ int main(int argc, char **argv) {
       //clean oflag content.
       oflag = 0;
       if(profile){
-        long long start_u = (long long ) (usage_start.ru_utime.tv_sec*pow(10, 6) +  usage_start.ru_utime.tv_usec);
-        long long start_s = (long long ) (usage_start.ru_stime.tv_sec*pow(10, 6) +  usage_start.ru_stime.tv_usec);        
         getrusage(RUSAGE_SELF, &usage_end);
         // long long end= (long long)usage.ru_utime.tv_sec*pow(10, 6) + (long long)usage.u_utime.tv_usec;
         long long endu = (long long ) (usage_end.ru_utime.tv_sec*pow(10, 6) +  usage_end.ru_utime.tv_usec);
@@ -602,7 +600,15 @@ int main(int argc, char **argv) {
       fd_array[fd_array_cur++] = pipefd[0];
       fd_isPipe[fd_array_cur] = 1;
       fd_array[fd_array_cur++] = pipefd[1];
-
+      if(profile){
+        getrusage(RUSAGE_SELF, &usage_end);
+        // long long end= (long long)usage.ru_utime.tv_sec*pow(10, 6) + (long long)usage.u_utime.tv_usec;
+        long long endu = (long long ) (usage_end.ru_utime.tv_sec*pow(10, 6) +  usage_end.ru_utime.tv_usec);
+        long long ends = (long long ) (usage_end.ru_stime.tv_sec*pow(10, 6) +  usage_end.ru_stime.tv_usec);
+        // printf("endu = %lld\n", ends );
+        printf("[profile] user CPU time => %lld us\t system CPU time => %lld us\n",
+        endu - start_u, ends - start_s);
+      }
       break;
 
 //close
@@ -622,6 +628,15 @@ int main(int argc, char **argv) {
       }
       close(fd_array[N]);
       fd_array[N] = -1;
+      if(profile){
+        getrusage(RUSAGE_SELF, &usage_end);
+        // long long end= (long long)usage.ru_utime.tv_sec*pow(10, 6) + (long long)usage.u_utime.tv_usec;
+        long long endu = (long long ) (usage_end.ru_utime.tv_sec*pow(10, 6) +  usage_end.ru_utime.tv_usec);
+        long long ends = (long long ) (usage_end.ru_stime.tv_sec*pow(10, 6) +  usage_end.ru_stime.tv_usec);
+        // printf("endu = %lld\n", ends );
+        printf("[profile] user CPU time => %lld us\t system CPU time => %lld us\n",
+        endu - start_u, ends - start_s);
+      }
       break;
       
 //verbose
@@ -670,7 +685,15 @@ int main(int argc, char **argv) {
       // //this should cause sig_fault
       // int *a = NULL;
       // int b = *a;
-      
+      if(profile){
+        getrusage(RUSAGE_SELF, &usage_end);
+        // long long end= (long long)usage.ru_utime.tv_sec*pow(10, 6) + (long long)usage.u_utime.tv_usec;
+        long long endu = (long long ) (usage_end.ru_utime.tv_sec*pow(10, 6) +  usage_end.ru_utime.tv_usec);
+        long long ends = (long long ) (usage_end.ru_stime.tv_sec*pow(10, 6) +  usage_end.ru_stime.tv_usec);
+        // printf("endu = %lld\n", ends );
+        printf("[profile] user CPU time => %lld us\t system CPU time => %lld us\n",
+        endu - start_u, ends - start_s);
+      }
       break;
 //ignore
     case 25:
@@ -695,7 +718,15 @@ int main(int argc, char **argv) {
       }
       // //testing purpose
       // sleep(10);
-      
+      if(profile){
+        getrusage(RUSAGE_SELF, &usage_end);
+        // long long end= (long long)usage.ru_utime.tv_sec*pow(10, 6) + (long long)usage.u_utime.tv_usec;
+        long long endu = (long long ) (usage_end.ru_utime.tv_sec*pow(10, 6) +  usage_end.ru_utime.tv_usec);
+        long long ends = (long long ) (usage_end.ru_stime.tv_sec*pow(10, 6) +  usage_end.ru_stime.tv_usec);
+        // printf("endu = %lld\n", ends );
+        printf("[profile] user CPU time => %lld us\t system CPU time => %lld us\n",
+        endu - start_u, ends - start_s);
+      }
       break;
 //default
     case 26:
@@ -715,6 +746,15 @@ int main(int argc, char **argv) {
           fprintf(stderr, "Error: fail to handle default %d.\n",N);
           exit_status = MAX(exit_status, 1);
           continue;
+      }
+      if(profile){
+        getrusage(RUSAGE_SELF, &usage_end);
+        // long long end= (long long)usage.ru_utime.tv_sec*pow(10, 6) + (long long)usage.u_utime.tv_usec;
+        long long endu = (long long ) (usage_end.ru_utime.tv_sec*pow(10, 6) +  usage_end.ru_utime.tv_usec);
+        long long ends = (long long ) (usage_end.ru_stime.tv_sec*pow(10, 6) +  usage_end.ru_stime.tv_usec);
+        // printf("endu = %lld\n", ends );
+        printf("[profile] user CPU time => %lld us\t system CPU time => %lld us\n",
+        endu - start_u, ends - start_s);
       }
       break;
 //pause    
