@@ -4,5 +4,6 @@
 
 
 #fdmove -c 2 1
+echo "first line"
 
-foreground { echo "Sending this here" } 
+foreground { echo "this is prog1" } echo "this is prog2"
