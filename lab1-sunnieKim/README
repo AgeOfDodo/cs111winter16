@@ -36,10 +36,10 @@ in --wait, we output the time usage of the sum of all child processes.
 
 For all benchmark, we created some big files using the following command:
 
-dd bs=8M count=16 </dev/urandom >a
-dd bs=8M count=16 </dev/urandom >b
-dd bs=8M count=16 </dev/urandom >c
-dd bs=8M count=16 </dev/urandom >d
+dd bs=8M count=8 </dev/urandom >a
+dd bs=8M count=8 </dev/urandom >b
+dd bs=8M count=8 </dev/urandom >c
+dd bs=8M count=8 </dev/urandom >d
 
 //note: the test cases for simpsh, execline, and shell are essentially the same just in different format.
 
@@ -49,28 +49,35 @@ benchmark for shell:
 # 1
 time sort a | cat b - | tr 'A-Z' 'a-z' > c
 # 2
-time ./prime 5004424555403
-
+time ./prime 5004424555403 > c
+# 3
+time cat a | sed 's/a/\n/g' > c
 
 benchmark for simpsh:
 # 1
 ./simpsh --verbose  --profile --rdonly a --pipe --pipe --wronly c --wronly d --command 0 2 6 sort - --command 1 4 6 cat b - --command 3 5 6 tr 'A-Z' 'a-z' --wait
 # 2
 ./simpsh --verbose --profile --rdonly a --append --wronly b --append --wronly c --command 0 1 2 ./prime 5004424555403 --wait
+# 3
+./simpsh --verbose --profile --rdonly a --pipe --wronly c --wronly d --command 0 2 4 cat --command 1 3 4 sed 's/a/\n/g'
 
 
 benchmark for execline:
-//TODO
+Note: export the PATH before executtion:
+PATH=$PATH:/usr/local/cs/execline-2.1.4.5/bin
+
+# 1 
+time redirfd -w 1 c pipeline sort a "" pipeline cat b - "" tr 'A-Z' 'a-z'
+# 2
+time redirfd -w 1 c ./prime 5004424555403
+# 3
+time redirfd -w 1 c pipeline cat a "" sed 's/a/\n/g'
 
 
 ----------------------------------
 3. Result and Comparison:
 
 please refer to lab1cResults.pdf
-
-//TEMP: 
-https://docs.google.com/document/d/1zg3HsO8FA2kHsMLb1Z5nu3nZJRku7aP4nN8DZ0x1e-w/edit?usp=sharing
-
 
 --------------------------------
 4. Data Collection
@@ -80,3 +87,7 @@ we collect user CPU time and kernel system CPU time
 5. Conclusion
 
 Our results for simpsh and bash are really close. This imply that simpsh is about as efficient as bash.
+As we can see in #1, execline seems to finish faster than bash and simpsh. However, this is only because the "time" command only records the time it take to finish the parent process. That is,
+$ time pipeline pro1 "" pro2 
+only records the time of pro2.
+
