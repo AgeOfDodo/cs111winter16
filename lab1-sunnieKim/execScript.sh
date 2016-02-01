@@ -4,5 +4,5 @@
 
 
 #fdmove -c 2 1
-
-foreground { echo "Sending this here" } 
+nice -10 echo blah
+#foreground { } 
