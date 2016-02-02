@@ -10,7 +10,8 @@ This is the readme file for lab1c
 
 the unit of time in our output is in microseconds.
 
-To obtain the CPU time usage of a code block, we call getrusage() at the beginning the block and at the end of the block. Then we got the difference of the two in user time and in system time.
+To obtain the CPU time usage of a code block, we call getrusage() at the beginning the block and at the end of the block.
+Then we got the difference of the two in user time and in system time.
 
 When there is file flags(trunc, creat ...etc) appended before file options(rdonly, wronly, rdwr), we calculated them together and generate one line of output.
 
@@ -29,7 +30,9 @@ dd bs=8M count=8 </dev/urandom >d
 
 //note: the test cases for simpsh, execline, and shell are essentially the same just in different format.
 
-We created a program "prime" that takes an number argument and find the next prime number. This is made so that we can compare primarly the user CPU time in one of our benchmark (#2). prime.c file is included in the folder and "prime" executable file can be generated with make.
+We created a program "prime" that takes an number argument and find the next prime number. 
+This is made so that we can compare primarly the user CPU time in one of our benchmark (#2). 
+prime.c file is included in the folder and "prime" executable file can be generated with make.
 
 benchmark for shell: 
 # 1
@@ -72,8 +75,11 @@ we collect user CPU time and kernel system CPU time
 --------------------------------
 5. Conclusion
 
-Our results for simpsh and bash are really close. This imply that simpsh is about as efficient as bash.
-As we can see in #1, execline seems to finish faster than bash and simpsh. However, this is only because the "time" command only records the time it take to finish the parent process. That is,
+Our results for simpsh and bash are really close. This implies that simpsh is about as efficient as bash.
+As we can see in #1, execline seems to finish faster than bash and simpsh. However, this is only because the 
+"time" command only records the time it take to finish the parent process. That is,
 $ time pipeline pro1 "" pro2 
 only records the time of pro2.
 
+As discussed with TAs in office hours and on Piazza, there is no known way to time child process times in execline, and therefore these answers, while 
+not entirely precise, are as accurate as possibe. 
