@@ -24,20 +24,6 @@ profile
 
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
-// void timeUsage(int who, struct rusage &usage){
-//   ret = getrusage(who, &usage);
-
-// }
-
-// void printProfile(int usageFlag, struct rusage &usage){
-//     getrusage(RUSAGE_SELF, &usage);
-//     // long long end= (long long)usage.ru_utime.tv_sec*pow(10, 6) + (long long)usage.u_utime.tv_usec;
-//     long long endu = (long long )(usage.ru_utime.tv_sec*pow(10, 6) +  usage.ru_utime.tv_usec);
-//     long long ends = (long long )(usage.ru_stime.tv_sec*pow(10, 6) +  usage.ru_stime.tv_usec);
-//     printf("endu = %lld\n", ends );
-//     printf("[profile] Total Main: user CPU time => %lld us\t system CPU time => %lld us\n",
-//       endu - beginu, ends - begins);
-// }
 
 int strIsNum(char* str){
   int j;
@@ -125,11 +111,6 @@ struct waitInfo{
   int end;
 };
 
-// void sig_handler(int sig){
-//   // printf("sig_handler(%d)\n", sig);
-//   fprintf(stderr, "%d caught\n", sig);
-//   exit(sig);
-// }
 
 void catch_handler(int sig, siginfo_t *s, void *arg){
   fprintf(stderr, "%d caught\n", sig);
@@ -215,14 +196,6 @@ int main(int argc, char **argv) {
 
   // Signal handling.
   struct sigaction sa;
-  // // memset (&sa, '\0', sizeof(sa));
-  // sa.sa_sigaction = &sig_act;
-  // sa.sa_flags = SA_SIGINFO;
-  // sa.sa_handler = &sig_handler;
-  // restart the system call if possible.
-  // sa.sa_flags = SA_RESTART;
-
-  //int profile_file_flags = 0;
 
   // Parse options
   while (1) {
@@ -770,10 +743,6 @@ int main(int argc, char **argv) {
     default:
         fprintf(stderr, "Error: ?? getopt returned character code 0%o ??\n", c);
     }
-    // freeArgs:
-    // for(j = 0; j != args_array_cur; j++){
-    //   printf("freeing args_array %s\n", args_array[j]);
-    // }
     free(args_array);
     // printf("done freeing\n");
   }
