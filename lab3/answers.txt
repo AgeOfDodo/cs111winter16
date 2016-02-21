@@ -11,14 +11,14 @@
 # information you'd like us to know, please add it at the end of the file.
 
 # Partner 1
-Name: 
-Student ID: 
-Email: 
+Name: Sunnie So
+Student ID: 704430286
+Email: sunnieso3741@ucla.edu
 
 # Partner 2 (if you're working in a team)
-Name: 
-Student ID: 
-Email: 
+# Name: 
+# Student ID: 
+# Email: 
 
 # Extra credit problems
 #Extra credit problem: none
