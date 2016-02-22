@@ -867,15 +867,19 @@ ospfs_read(struct file *filp, char __user *buffer, size_t count, loff_t *f_pos)
 	int retval = 0;
 	size_t amount = 0;
 
+	// eprintk("oi->oi_size = %d, *f_pos = %d, count = %d\n",oi->oi_size , *f_pos, count);
 	// Make sure we don't read past the end of the file!
 	// Change 'count' so we never read past the end of the file.
 	/* EXERCISE: Your code here */
+	if (*f_pos + count > oi->oi_size){
+		count = oi->oi_size - *f_pos;
+	} 
 
 	// Copy the data to user block by block
 	while (amount < count && retval >= 0) {
 		uint32_t blockno = ospfs_inode_blockno(oi, *f_pos); // a pointer to the 'offset'th byte of 'oi's data contents
 		uint32_t n;
-		uint32_t remaining = count - amount;
+		uint32_t remaining = count - amount;		// the remaining data needed to be copied
 		char *data;
 		uint32_t offset = *f_pos % OSPFS_BLKSIZE;
 		n = OSPFS_BLKSIZE - offset;
@@ -886,7 +890,7 @@ ospfs_read(struct file *filp, char __user *buffer, size_t count, loff_t *f_pos)
 			goto done;
 		}
 
-		// the block number that contain the 'offset'th byte of the file
+		// the pointer that points to the beginning of the block that contains the 'offset'th byte of the file
 		data = ospfs_block(blockno);
 
 		// Figure out how much data is left in this block to read.
@@ -906,7 +910,7 @@ ospfs_read(struct file *filp, char __user *buffer, size_t count, loff_t *f_pos)
 		*/
 		unsigned long notTransfer = copy_to_user(buffer, data + offset, n);
 		if ( notTransfer != 0){
-			eprintk("Error: seg fault. Fails to read data.")
+			eprintk("Error: seg fault. Fails to read data.");
 			return -EFAULT;
 		}
 		// retval = -EIO; // Replace these lines
