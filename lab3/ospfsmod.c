@@ -449,12 +449,9 @@ ospfs_dir_readdir(struct file *filp, void *dirent, filldir_t filldir)
 		ospfs_inode_t *entry_oi;
 
 		/* If at the end of the directory, set 'r' to 1 and exit
-		 * the loop.  For now we do this all the time.
+		 * the loop. 
 		 *
 		 * EXERCISE: Your code here */
-		r = 1;		/* Fix me! */
-		break;		/* Fix me! */
-
 		/* Get a pointer to the next entry (od) in the directory.
 		 * The file system interprets the contents of a
 		 * directory-file as a sequence of ospfs_direntry structures.
@@ -476,6 +473,30 @@ ospfs_dir_readdir(struct file *filp, void *dirent, filldir_t filldir)
 		 */
 
 		/* EXERCISE: Your code here */
+		// load part of direntry locate at f_pos within dir_oi
+		od = ospfs_inode_data(dir_oi, f_pos * OSPFS_DIRENTRY_SIZE)
+		// load the inode structure for current entry(od)
+		entry_oi = ospfs_inode(od->ino)
+
+		// entry_oi is 0 if od->ino >= ospfs_super->os_ninodes
+		if(entry_oi != 0){
+			switch(entry_oi->oi_ftype){
+				case OSPFS_FTYPE_REG:
+					ok_so_far = filldir(dirent, od->od_name, 2, f_pos, filp->f_dentry->d_parent->d_inode->i_ino, DT_REG);
+					break;
+				case OSPFS_FTYPE_DIR:
+					ok_so_far = filldir(dirent, od->od_name, 2, f_pos, filp->f_dentry->d_parent->d_inode->i_ino, DT_DIR);
+					break;
+				case OSPFS_FTYPE_SYMLINK:
+					ok_so_far = filldir(dirent, od->od_name, 2, f_pos, filp->f_dentry->d_parent->d_inode->i_ino, DT_LNK);
+					break;
+				default:
+					eprintk("Error: unknown file type.");
+					r = 1;
+			}
+		}
+		// increment fpos:
+		f_pos++;
 	}
 
 	// Save the file position and return!
