@@ -873,16 +873,20 @@ ospfs_read(struct file *filp, char __user *buffer, size_t count, loff_t *f_pos)
 
 	// Copy the data to user block by block
 	while (amount < count && retval >= 0) {
-		uint32_t blockno = ospfs_inode_blockno(oi, *f_pos);
+		uint32_t blockno = ospfs_inode_blockno(oi, *f_pos); // a pointer to the 'offset'th byte of 'oi's data contents
 		uint32_t n;
+		uint32_t remaining = count - amount;
 		char *data;
-
+		uint32_t offset = *f_pos % OSPFS_BLKSIZE;
+		n = OSPFS_BLKSIZE - offset;
+		
 		// ospfs_inode_blockno returns 0 on error
 		if (blockno == 0) {
 			retval = -EIO;
 			goto done;
 		}
 
+		// the block number that contain the 'offset'th byte of the file
 		data = ospfs_block(blockno);
 
 		// Figure out how much data is left in this block to read.
@@ -890,8 +894,23 @@ ospfs_read(struct file *filp, char __user *buffer, size_t count, loff_t *f_pos)
 		// into user space.
 		// Use variable 'n' to track number of bytes moved.
 		/* EXERCISE: Your code here */
-		retval = -EIO; // Replace these lines
-		goto done;
+
+		if (n > remaining)
+			n = remaining;
+
+		/* copy_to_user(void __user *dst, const void *src, unsigned long n);
+		copy_to_user only copies into valid, writable user memory. 
+		Returns the number of bytes not transferred. Thus, 0 is a successful 
+		return value. If the function returns non-zero, this indicates a segmentation 
+		fault, and the caller should indicate that fault (usually by returning -EFAULT).
+		*/
+		unsigned long notTransfer = copy_to_user(buffer, data + offset, n);
+		if ( notTransfer != 0){
+			eprintk("Error: seg fault. Fails to read data.")
+			return -EFAULT;
+		}
+		// retval = -EIO; // Replace these lines
+		// goto done;
 
 		buffer += n;
 		amount += n;
