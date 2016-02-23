@@ -578,6 +578,11 @@ static uint32_t
 allocate_block(void)
 {
 	/* EXERCISE: Your code here */
+	// for each black starting from block 2(OSPFS_FREEMAP_BLK), load the block's content.
+	// in each block, read each bit until we read a 1, which means that 
+	// the indicated block is free
+	
+	// disk is full
 	return 0;
 }
 
@@ -908,8 +913,7 @@ ospfs_read(struct file *filp, char __user *buffer, size_t count, loff_t *f_pos)
 		return value. If the function returns non-zero, this indicates a segmentation 
 		fault, and the caller should indicate that fault (usually by returning -EFAULT).
 		*/
-		unsigned long notTransfer = copy_to_user(buffer, data + offset, n);
-		if ( notTransfer != 0){
+		if (copy_to_user(buffer, data + offset, n) != 0){
 			eprintk("Error: seg fault. Fails to read data.");
 			return -EFAULT;
 		}
@@ -953,22 +957,36 @@ ospfs_write(struct file *filp, const char __user *buffer, size_t count, loff_t *
 	// Support files opened with the O_APPEND flag.  To detect O_APPEND,
 	// use struct file's f_flags field and the O_APPEND bit.
 	/* EXERCISE: Your code here */
+	if (filp->f_flags & O_APPEND){
+		*f_pos = oi->oi_size; 			
+	}
 
-	// If the user is writing past the end of the file, change the file's
+	// If the user is writing past the end of the file, cOSPFS_FREEMAP_BLKhange the file's
 	// size to accomodate the request.  (Use change_size().)
 	/* EXERCISE: Your code here */
+	if (*f_pos + count > oi->oi_size){
+		eprintk("need to change size");
+		int ret = change_size( oi, *f_pos + count);
+		if (ret < 0)
+			return ret;	
+	} 
 
 	// Copy data block by block
-	while (amount < count && retval >= 0) {
+	while (amount < count && retval >= 0) {		
 		uint32_t blockno = ospfs_inode_blockno(oi, *f_pos);
 		uint32_t n;
+		uint32_t remaining = count - amount;		// the remaining data needed to be copied
 		char *data;
-
+		uint32_t offset = *f_pos % OSPFS_BLKSIZE;
+		n = OSPFS_BLKSIZE - offset;
+		
+		// ospfs_inode_blockno returns 0 on error
 		if (blockno == 0) {
 			retval = -EIO;
 			goto done;
 		}
 
+		// the pointer that points to the beginning of the block that contains the 'offset'th byte of the file
 		data = ospfs_block(blockno);
 
 		// Figure out how much data is left in this block to write.
@@ -976,9 +994,16 @@ ospfs_write(struct file *filp, const char __user *buffer, size_t count, loff_t *
 		// read user space.
 		// Keep track of the number of bytes moved in 'n'.
 		/* EXERCISE: Your code here */
-		retval = -EIO; // Replace these lines
-		goto done;
 
+		if (n > remaining)
+			n = remaining;
+
+		// unsigned long copy_from_user(void *dst, const void __user *src, unsigned long n)
+		if (copy_from_user(data + offset, buffer, n) != 0){
+			eprintk("Error: seg fault. Fails to write data.");
+			return -EFAULT;
+		}
+				
 		buffer += n;
 		amount += n;
 		*f_pos += n;
