@@ -578,10 +578,19 @@ static uint32_t
 allocate_block(void)
 {
 	/* EXERCISE: Your code here */
-	// for each black starting from block 2(OSPFS_FREEMAP_BLK), load the block's content.
-	// in each block, read each bit until we read a 1, which means that 
-	// the indicated block is free
-	
+	// load the bitmap
+	void* bitmap = ospfs_block(OSPFS_FREEMAP_BLK)
+
+	// starting at block 3, check if there is a bit == 1 (free)
+	uint32_t current_block_bit;
+	for (current_block_bit = OSPFS_FREEMAP_BLK + 1; current_block_bit < ospfs_super->os_firstinob; current_block_bit++){
+		// bitvector_test -- Return the value of the 'i'th bit of 'vector'.
+		if (bitvector_test(bitmap, current_block_bit) == 1){
+			// mark this block non-free
+			bitvector_clear(bitmap, current_block_bit);
+			return current_block_bit;
+		}
+	}
 	// disk is full
 	return 0;
 }
@@ -602,6 +611,15 @@ static void
 free_block(uint32_t blockno)
 {
 	/* EXERCISE: Your code here */
+	// check if blockno is a valid block number
+	if (blockno < 3 || blockno >= ospfs_super->os_nblocks){
+		eprintk("Error: invalid block number to free");
+		return 
+	}
+	// load the bitmap
+	void* bitmap = ospfs_block(OSPFS_FREEMAP_BLK)
+	if (bitvector_test(bitmap, blockno) == 0)
+		bitvector_set(bitmap, blockno);
 }
 
 
