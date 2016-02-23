@@ -579,7 +579,7 @@ allocate_block(void)
 {
 	/* EXERCISE: Your code here */
 	// load the bitmap
-	void* bitmap = ospfs_block(OSPFS_FREEMAP_BLK)
+	void* bitmap = ospfs_block(OSPFS_FREEMAP_BLK);
 
 	// starting at block 3, check if there is a bit == 1 (free)
 	uint32_t current_block_bit;
@@ -614,11 +614,11 @@ free_block(uint32_t blockno)
 	// check if blockno is a valid block number
 	if (blockno < 3 || blockno >= ospfs_super->os_nblocks){
 		eprintk("Error: invalid block number to free");
-		return 
+		return;
 	}
 	// load the bitmap
-	void* bitmap = ospfs_block(OSPFS_FREEMAP_BLK)
-	if (bitvector_test(bitmap, blockno) == 0)
+	void* bitmap = ospfs_block(OSPFS_FREEMAP_BLK);
+	if (bitvector_test(bitmap, blockno) == 0);
 		bitvector_set(bitmap, blockno);
 }
 
@@ -732,10 +732,16 @@ add_block(ospfs_inode_t *oi)
 {
 	// current number of blocks in file
 	uint32_t n = ospfs_size2nblocks(oi->oi_size);
-
+	// if number of blocks requested to add is more than the number of blocks om the disk, then no
+	if ( n >= OSPFS_MAXFILEBLKS){
+		eprintfk("Error: no enough space to add blocks")
+		return -ENOSPC;
+	}
 	// keep track of allocations to free in case of -ENOSPC
 	uint32_t *allocated[2] = { 0, 0 };
-
+	// find a free block
+	uint31_t freeBlockN = allocate_block();
+	
 	/* EXERCISE: Your code here */
 	return -EIO; // Replace this line
 }
@@ -767,7 +773,7 @@ static int
 remove_block(ospfs_inode_t *oi)
 {
 	// current number of blocks in file
-	uint32_t n = ospfs_size2nblocks(oi->oi_size);
+	//uint32_t n = ospfs_size2nblocks(oi->oi_size);
 
 	/* EXERCISE: Your code here */
 	return -EIO; // Replace this line
@@ -813,8 +819,8 @@ remove_block(ospfs_inode_t *oi)
 static int
 change_size(ospfs_inode_t *oi, uint32_t new_size)
 {
-	uint32_t old_size = oi->oi_size;
-	int r = 0;
+	//uint32_t old_size = oi->oi_size;
+	//int r = 0;
 
 	while (ospfs_size2nblocks(oi->oi_size) < ospfs_size2nblocks(new_size)) {
 	        /* EXERCISE: Your code here */
@@ -1019,7 +1025,8 @@ ospfs_write(struct file *filp, const char __user *buffer, size_t count, loff_t *
 		// unsigned long copy_from_user(void *dst, const void __user *src, unsigned long n)
 		if (copy_from_user(data + offset, buffer, n) != 0){
 			eprintk("Error: seg fault. Fails to write data.");
-			return -EFAULT;
+			retval = -EFAULT;
+			goto done;
 		}
 				
 		buffer += n;
