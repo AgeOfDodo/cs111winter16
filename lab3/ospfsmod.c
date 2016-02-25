@@ -1271,8 +1271,6 @@ create_blank_direntry(ospfs_inode_t *dir_oi)
 		entry = ospfs_inode_data(dir_oi, offset);
 		entry->od_ino == 0;// set entry to empty
 	}
-	
-	eprintk("create_blank_direntry exit");
     	return entry;
 }
 
@@ -1375,7 +1373,7 @@ ospfs_create(struct inode *dir, struct dentry *dentry, int mode, struct nameidat
 	}
 
 	// create a blank directory entry
-	ospfs_direntry_t *dir_entry = create_blank_direntry(entry_od);
+	ospfs_direntry_t *dir_entry = create_blank_direntry(dir_oi);
 	if(IS_ERR(dir_entry))
 		return ERR_PTR(dir_entry);
 	// add the entry to parent directory inode structure and initialize name
