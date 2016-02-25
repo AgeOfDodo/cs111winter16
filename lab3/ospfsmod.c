@@ -1311,10 +1311,30 @@ create_blank_direntry(ospfs_inode_t *dir_oi)
 static int
 ospfs_link(struct dentry *src_dentry, struct inode *dir, struct dentry *dst_dentry) {
 	/* EXERCISE: Your code here. */
-	// eprintK("ospfs_link ")
-	// dst_dentry->d_name.name =src_dentry.d_name.name
-	// dst_dentry->d_name.len =src_dentry.d_name.len
-	// dst_dentry->d_inode->i_ino =src_dentry.d_inode->i_ino
+	// get inode struct from dir and src
+	ospfs_inode_t* dir_oi = ospfs_inode(dir->i_ino);
+	ospfs_inode_t* src_oi = ospfs_inode(src_dentry->d_inode->i_ino);
+	// check if name length is within range
+	if(dst_dentry->d_name.len > OSPFS_MAXNAMELEN)
+		return -ENAMETOOLONG;
+
+	// check if filename exists
+	if(find_direntry(dir_oi, dst_dentry->d_name.name, dst_dentry->d_name.len) != NULL)
+		return -EEXIST;
+
+	// create a new direntry for the new hard link
+	ospfs_direntry_t *hard_direntry = create_blank_direntry(dir_oi);
+	// error check
+	if (IS_ERR (hard_direntry))
+		return ERR_PTR(hard_direntry);
+
+	// copy info
+	hard_direntry->od_ino = src_dentry->d_inode->i_ino;
+	memcpy(hard_direntry->od_name, dst_dentry->d_name.name, dst_dentry->d_name.len);
+	hard_direntry->od_name[dst_dentry->d_name.len] = '\0';
+
+	// increment nlink
+	src_oi->oi_nlink++;
 	return -EINVAL;
 }
 
