@@ -1255,7 +1255,7 @@ create_blank_direntry(ospfs_inode_t *dir_oi)
 	/* EXERCISE: Your code here. */
 	uint32_t offset;
 	uint32_t r = 0;
-	for(offset = 0; offset < dir_oi->oi_size; offset+=OSPFS_DIRENTRY_SIZE){
+	for(offset = 0; offset < dir_oi->oi_size; offset+=OSPFS_DIRENTRY_SIZE){				
 		ospfs_direntry_t *entry = ospfs_inode_data(dir_oi, offset);
 		if(entry->od_ino == 0){ // entry is empty. cool.
 			return entry;
@@ -1267,10 +1267,12 @@ create_blank_direntry(ospfs_inode_t *dir_oi)
 
 	ospfs_direntry_t *entry = NULL;
 	// clear out all the directory entries...?
-	for(;offset < dir_oi->oi_size;offset+=OSPFS_DIRENTRY_SIZE){
+	for(;offset < dir_oi->oi_size;offset+=OSPFS_DIRENTRY_SIZE){	
 		entry = ospfs_inode_data(dir_oi, offset);
 		entry->od_ino == 0;// set entry to empty
 	}
+	
+	eprintk("create_blank_direntry exit");
     	return entry;
 }
 
@@ -1341,6 +1343,8 @@ ospfs_link(struct dentry *src_dentry, struct inode *dir, struct dentry *dst_dent
 static int
 ospfs_create(struct inode *dir, struct dentry *dentry, int mode, struct nameidata *nd)
 {
+	
+	//eprintk("ospfs_create");
 	ospfs_inode_t *dir_oi = ospfs_inode(dir->i_ino);
 	uint32_t entry_ino = 0;
 	/* EXERCISE: Your code here. */
@@ -1357,7 +1361,7 @@ ospfs_create(struct inode *dir, struct dentry *dentry, int mode, struct nameidat
 	ospfs_inode_t *entry_od = NULL;
 	uint32_t inode_no;
 	for(inode_no = 2; inode_no < ospfs_super->os_ninodes; inode_no++){
-		ospfs_inode_t* entry_od = ospfs_inode(inode_no); 
+		entry_od = ospfs_inode(inode_no); 
 		if(entry_od->oi_nlink == 0){
 			// found an empty inode!
 			entry_ino = inode_no;
@@ -1365,17 +1369,15 @@ ospfs_create(struct inode *dir, struct dentry *dentry, int mode, struct nameidat
 		}
 			
 	}
-    // check if it actually found an empty inode
+    	// check if it actually found an empty inode
 	if(entry_ino == 0){
-		eprintk("error is here");
 		return -ENOSPC;
 	}
 
 	// create a blank directory entry
-	ospfs_direntry_t *dir_entry = create_blank_direntry(entry_ino);
+	ospfs_direntry_t *dir_entry = create_blank_direntry(entry_od);
 	if(IS_ERR(dir_entry))
 		return ERR_PTR(dir_entry);
-
 	// add the entry to parent directory inode structure and initialize name
 	memcpy(dir_entry->od_name,dentry->d_name.name,dentry->d_name.len);
 	dir_entry->od_ino = entry_ino;
@@ -1387,7 +1389,6 @@ ospfs_create(struct inode *dir, struct dentry *dentry, int mode, struct nameidat
 	entry_od->oi_nlink = 1;                  // Link count (0 means free)
 	entry_od->oi_mode = mode;		    // File permissions mode
 	
-
 	/* Execute this code after your function has successfully created the
 	   file.  Set entry_ino to the created file's inode number before
 	   getting here. */
