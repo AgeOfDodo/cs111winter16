@@ -479,6 +479,10 @@ ospfs_dir_readdir(struct file *filp, void *dirent, filldir_t filldir)
 		/* EXERCISE: Your code here */
 		// load part of direntry locate at f_pos within dir_oi
 		od = ospfs_inode_data(dir_oi, f_pos * OSPFS_DIRENTRY_SIZE);
+
+		// skip this one if the od_ino is empty		
+		if(od->od_ino == 0)
+			goto skip;
 		// load the inode structure for current entry(od)
 		entry_oi = ospfs_inode(od->od_ino);
 
@@ -499,6 +503,7 @@ ospfs_dir_readdir(struct file *filp, void *dirent, filldir_t filldir)
 					r = 1;
 			}
 		}
+		skip:
 		// increment fpos:
 		f_pos++;
 	}
@@ -1269,7 +1274,7 @@ create_blank_direntry(ospfs_inode_t *dir_oi)
 	// clear out all the directory entries...?
 	for(;offset < dir_oi->oi_size;offset+=OSPFS_DIRENTRY_SIZE){	
 		entry = ospfs_inode_data(dir_oi, offset);
-		entry->od_ino == 0;// set entry to empty
+		entry->od_ino = 0;// set entry to empty
 	}
     return entry;
 }
