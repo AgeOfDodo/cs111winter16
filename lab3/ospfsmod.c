@@ -1271,7 +1271,7 @@ create_blank_direntry(ospfs_inode_t *dir_oi)
 		entry = ospfs_inode_data(dir_oi, offset);
 		entry->od_ino == 0;// set entry to empty
 	}
-    	return entry;
+    return entry;
 }
 
 // ospfs_link(src_dentry, dir, dst_dentry
@@ -1306,6 +1306,10 @@ create_blank_direntry(ospfs_inode_t *dir_oi)
 static int
 ospfs_link(struct dentry *src_dentry, struct inode *dir, struct dentry *dst_dentry) {
 	/* EXERCISE: Your code here. */
+	// eprintK("ospfs_link ")
+	// dst_dentry->d_name.name =src_dentry.d_name.name
+	// dst_dentry->d_name.len =src_dentry.d_name.len
+	// dst_dentry->d_inode->i_ino =src_dentry.d_inode->i_ino
 	return -EINVAL;
 }
 
@@ -1377,8 +1381,8 @@ ospfs_create(struct inode *dir, struct dentry *dentry, int mode, struct nameidat
 	if(IS_ERR(dir_entry))
 		return ERR_PTR(dir_entry);
 	// add the entry to parent directory inode structure and initialize name
-	memcpy(dir_entry->od_name,dentry->d_name.name,dentry->d_name.len);
 	dir_entry->od_ino = entry_ino;
+	memcpy(dir_entry->od_name,dentry->d_name.name,dentry->d_name.len);
 	(dir_entry->od_name)[dentry->d_name.len] = '\0';
 	
 	// initialize inode variables.
@@ -1386,7 +1390,11 @@ ospfs_create(struct inode *dir, struct dentry *dentry, int mode, struct nameidat
 	entry_od->oi_ftype = OSPFS_FTYPE_REG;                  // OSPFS_FTYPE_* constant
 	entry_od->oi_nlink = 1;                  // Link count (0 means free)
 	entry_od->oi_mode = mode;		    // File permissions mode
-	
+	entry_od->oi_indirect = 0;
+	entry_od->oi_indirect2 = 0;
+	int j;
+	for(j = 0; j != OSPFS_NDIRECT; j++)
+		entry_od->oi_direct[j] = 0;
 	/* Execute this code after your function has successfully created the
 	   file.  Set entry_ino to the created file's inode number before
 	   getting here. */
