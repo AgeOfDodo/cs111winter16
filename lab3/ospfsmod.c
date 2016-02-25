@@ -1461,14 +1461,61 @@ ospfs_symlink(struct inode *dir, struct dentry *dentry, const char *symname)
 {
 	ospfs_inode_t *dir_oi = ospfs_inode(dir->i_ino);
 	uint32_t entry_ino = 0;
-
+	ospfs_symlink_inode_t* symlink_oi = NULL;
+	int ret = 0;
 	/* EXERCISE: Your code here. */
-	return -EINVAL;
+
+	// check if name length is within range
+	if(dentry->d_name.len > OSPFS_MAXNAMELEN)
+		return -ENAMETOOLONG;
+	if(strlen(symname) > OSPFS_MAXSYMLINKLEN)
+		return -ENAMETOOLONG;
+
+	// check if filename exists
+	if(find_direntry(dir_oi, dentry->d_name.name, dentry->d_name.len) != NULL)
+		return -EEXIST;
+
+	// find an empty sym inode
+	ospfs_symlink_inode_t *entry_od = NULL;
+	uint32_t inode_no;
+	for(inode_no = 2; inode_no < ospfs_super->os_ninodes; inode_no++){
+		entry_od = (ospfs_symlink_inode_t*)ospfs_inode(inode_no); 
+		if(entry_od->oi_nlink == 0){
+			// found an empty inode!
+			entry_ino = inode_no;
+			break;
+		}
+	}
+  // check if it actually found an empty inode
+	if(entry_ino == 0){
+		return -ENOSPC;
+	}
+
+	// create a blank directory entry
+	ospfs_direntry_t *dir_entry = create_blank_direntry(dir_oi);
+	if(IS_ERR(dir_entry))
+		return ERR_PTR(dir_entry);
+
+	//set destination file
+	memcpy(entry_od->oi_symlink, symname, strlen(symname));
+	// add the entry to parent directory inode structure and initialize name
+	dir_entry->od_ino = entry_ino;
+	memcpy(dir_entry->od_name,dentry->d_name.name,dentry->d_name.len);
+	(dir_entry->od_name)[dentry->d_name.len] = '\0';
+	
+	// initialize inode variables.
+	entry_od->oi_size = strlen(symname);                   // File size
+	entry_od->oi_ftype = OSPFS_FTYPE_SYMLINK;                  // OSPFS_FTYPE_* constant
+	entry_od->oi_nlink = 1; 
+
+	// increment nlink
+	dir_oi->oi_nlink++;
+
 
 	/* Execute this code after your function has successfully created the
 	   file.  Set entry_ino to the created file's inode number before
 	   getting here. */
-	{
+	if(1){
 		struct inode *i = ospfs_mk_linux_inode(dir->i_sb, entry_ino);
 		if (!i)
 			return -ENOMEM;
