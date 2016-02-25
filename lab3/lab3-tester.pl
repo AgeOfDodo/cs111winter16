@@ -91,6 +91,21 @@ close FOO;
       '15'
     ],
 
+    # additional tests
+    # create hard link
+    [ 'touch test/hlink | ln test/hlink test/hlink_link | echo "hi">test/hlink | cat test/hlink_link | grep "hi"',
+      'hi'
+    ],
+
+    # delete hard link
+    [ 'rm test/hlink_link | cat test/hlink | grep "hi"',
+      'hi'
+    ],
+
+    [ 'cat test/hlink | ls test | grep "hlink_link"',
+      ''
+    ],
+
 );
 
 my($ntest) = 0;

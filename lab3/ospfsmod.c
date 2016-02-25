@@ -1335,7 +1335,7 @@ ospfs_link(struct dentry *src_dentry, struct inode *dir, struct dentry *dst_dent
 
 	// increment nlink
 	src_oi->oi_nlink++;
-	return -EINVAL;
+	return 0;
 }
 
 // ospfs_create
