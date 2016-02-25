@@ -583,7 +583,7 @@ allocate_block(void)
 
 	// starting at block 3, check if there is a bit == 1 (free)
 	uint32_t current_block_bit;
-	for (current_block_bit = OSPFS_FREEMAP_BLK + 1; current_block_bit < ospfs_super->os_firstinob; current_block_bit++){
+	for (current_block_bit = OSPFS_FREEMAP_BLK + 1; current_block_bit < ospfs_super->os_nblocks; current_block_bit++){
 		// bitvector_test -- Return the value of the 'i'th bit of 'vector'.
 		if (bitvector_test(bitmap, current_block_bit) == 1){
 			// mark this block non-free
@@ -751,7 +751,7 @@ add_block(ospfs_inode_t *oi)
 	
 	// check if the number of blocks exceed the maximum
 	if (n >= OSPFS_MAXFILEBLKS){
-		eprintk("maxxxx");
+		eprintk("addblock exceed max size");
 		return -ENOSPC;
 	}
 
@@ -762,8 +762,7 @@ add_block(ospfs_inode_t *oi)
 	allocated[0] = allocate_block();
 	// check if block is full.
 	if(allocated[0] == 0){
-		eprintk("allocate fails");
-	
+		eprintk("allocate block fails");
 		return -ENOSPC;
 	}
 
@@ -1368,7 +1367,7 @@ ospfs_create(struct inode *dir, struct dentry *dentry, int mode, struct nameidat
 	}
     // check if it actually found an empty inode
 	if(entry_ino == 0){
-		eprintK("the error is here");
+		eprintk("error is here");
 		return -ENOSPC;
 	}
 
