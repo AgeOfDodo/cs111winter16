@@ -106,6 +106,18 @@ close FOO;
       ''
     ],
 
+    # create sym link
+    [ 'touch test/slink | ln -s slink test/slink_link | echo "hi"> test/slink | cat test/slink_link | grep "hi"',
+      'hi'
+    ],
+
+    # delete origin file results in broken sym link
+    [ 'rm test/slink | cat test/slink 2> /dev/null | grep "hi"',
+      ''
+    ],
+
+
+
 );
 
 my($ntest) = 0;

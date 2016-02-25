@@ -1461,8 +1461,6 @@ ospfs_symlink(struct inode *dir, struct dentry *dentry, const char *symname)
 {
 	ospfs_inode_t *dir_oi = ospfs_inode(dir->i_ino);
 	uint32_t entry_ino = 0;
-	ospfs_symlink_inode_t* symlink_oi = NULL;
-	int ret = 0;
 	/* EXERCISE: Your code here. */
 
 	// check if name length is within range

@@ -24,3 +24,5 @@ Email: sunnieso3741@ucla.edu
 #Extra credit problem: none
 
 # Add any other information you'd like us to know below this line.
+added test cases for hard link and symbolic links in lab3-tester.pl
+these test cases(18-22) depends on one another, so we can not run single test alone.
