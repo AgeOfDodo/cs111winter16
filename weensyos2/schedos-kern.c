@@ -67,9 +67,9 @@ int scheduling_algorithm;
 
 // USE THESE VALUES FOR SETTING THE scheduling_algorithm VARIABLE.
 #define __EXERCISE_1__   0  // the initial algorithm
-#define __EXERCISE_2__   2  // strict priority scheduling (exercise 2)
-#define __EXERCISE_4A__ 41  // p_priority algorithm (exercise 4.a)
-#define __EXERCISE_4B__ 42  // p_share algorithm (exercise 4.b)
+#define __EXERCISE_2__   1  // strict priority scheduling (exercise 2)
+#define __EXERCISE_4A__  2  // p_priority algorithm (exercise 4.a)
+#define __EXERCISE_4B__  3  // p_share algorithm (exercise 4.b)
 #define __EXERCISE_7__   7  // any algorithm for exercise 7
 
 
@@ -127,7 +127,7 @@ start(void)
 	//   41 = p_priority algorithm (exercise 4.a)
 	//   42 = p_share algorithm (exercise 4.b)
 	//    7 = any algorithm that you may implement for exercise 7
-	scheduling_algorithm = 2;
+	scheduling_algorithm = __EXERCISE_4A__;
 
 	// Switch to the first process.
 	run(&proc_array[1]);
@@ -231,12 +231,23 @@ schedule(void)
 		}
 
 	// priority scheduling
-	if(scheduling_algorithm == __EXERCISE_2__){
-		for(pid = NPROCS - 1; proc > 0 ; proc--){
+	else if(scheduling_algorithm == __EXERCISE_2__){
+		for(pid = 0; pid < NPROCS ; pid++){
 			if (proc_array[pid].p_state == P_RUNNABLE)
-				run(&proc_array[pid]);
+				break;
 		}
+		run(&proc_array[pid]);
+
+	}else if(scheduling_algorithm == __EXERCISE_4A__){
+		
+	
+	}else if(scheduling_algorithm == __EXERCISE_4B__){
+		
+	
+	}else if(scheduling_algorithm == __EXERCISE_7__){
+		
 	}
+
 	// If we get here, we are running an unknown scheduling algorithm.
 	cursorpos = console_printf(cursorpos, 0x100, "\nUnknown scheduling algorithm %d\n", scheduling_algorithm);
 	while (1)
