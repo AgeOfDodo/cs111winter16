@@ -257,20 +257,23 @@ schedule(void)
 		run(&proc_array[pid]);
 
 	}else if(scheduling_algorithm == __EXERCISE_4A__){
-		pid_t topPriority = 0;
-
-		for(pid = 1; pid < NPROCS ; pid++){
-			if (proc_array[pid].p_state == P_RUNNABLE)
-				if (proc_array[topPriority].p_priority == proc_array[pid].p_priority){
-					topPriority = (alternation) ? topPriority : pid
-					alternation	= (alternation) ? 0 : 1;
-
- 				}else{
-					topPriority = (proc_array[topPriority].p_priority > proc_array[pid].p_priority) ? topPriority : pid;
-				}
+		int topPriority = 0;
+		pid_t j;
+		// get the top priority number 
+		for(j = 1; j < NPROCS ; j++){
+			if (proc_array[j].p_state == P_RUNNABLE){
+				topPriority = (topPriority >= proc_array[j].p_priority) ? topPriority : proc_array[j].p_priority;
+			}
 		}
-		run(&proc_array[topPriority]);
-		
+		// alternate the processes if there are more than one with top priority
+		while (1) {
+			pid = (pid + 1) % NPROCS;
+			for(; pid < NPROCS ; pid++){
+				if (proc_array[pid].p_state == P_RUNNABLE && proc_array[pid].p_priority == topPriority)
+				break;
+			}
+			run(&proc_array[pid]);
+		}
 	
 	}else if(scheduling_algorithm == __EXERCISE_4B__){
 		
