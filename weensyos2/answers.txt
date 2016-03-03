@@ -1,5 +1,5 @@
-Name:
-UCLA ID:
+Name: Sunnie So
+UCLA ID: 704430286
 
 Collaborators:
 
@@ -7,7 +7,7 @@ Collaborators:
 
 Response to Exercise 1:
 
-The name of the scheduling algorithm is:
+The name of the scheduling algorithm is: Round Robin
 
 
 (Exercise 2 is a coding exercise)

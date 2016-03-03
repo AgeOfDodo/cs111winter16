@@ -38,7 +38,7 @@ start(void)
 		*cursorpos++ = PRINTCHAR;
 		sys_yield();
 	}
-
+	sys_exit();
 	// Yield forever.
 	while (1)
 		sys_yield();

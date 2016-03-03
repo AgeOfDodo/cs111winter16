@@ -127,7 +127,7 @@ start(void)
 	//   41 = p_priority algorithm (exercise 4.a)
 	//   42 = p_share algorithm (exercise 4.b)
 	//    7 = any algorithm that you may implement for exercise 7
-	scheduling_algorithm = 0;
+	scheduling_algorithm = 2;
 
 	// Switch to the first process.
 	run(&proc_array[1]);
@@ -230,6 +230,13 @@ schedule(void)
 				run(&proc_array[pid]);
 		}
 
+	// priority scheduling
+	if(scheduling_algorithm == __EXERCISE_2__){
+		for(pid = NPROCS - 1; proc > 0 ; proc--){
+			if (proc_array[pid].p_state == P_RUNNABLE)
+				run(&proc_array[pid]);
+		}
+	}
 	// If we get here, we are running an unknown scheduling algorithm.
 	cursorpos = console_printf(cursorpos, 0x100, "\nUnknown scheduling algorithm %d\n", scheduling_algorithm);
 	while (1)
