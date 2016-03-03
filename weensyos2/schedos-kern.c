@@ -64,10 +64,10 @@ int alternation = 1;
 // UNCOMMENT THESE LINES IF YOU DO EXERCISE 4.B
 // Use these #defines to initialize your implementation.
 // Changing one of these lines should change the initialization.
-// #define __SHARE_1__ 1
-// #define __SHARE_2__ 2
-// #define __SHARE_3__ 3
-// #define __SHARE_4__ 4
+#define __SHARE_1__ 1
+#define __SHARE_2__ 2
+#define __SHARE_3__ 3
+#define __SHARE_4__ 4
 
 // USE THESE VALUES FOR SETTING THE scheduling_algorithm VARIABLE.
 #define __EXERCISE_1__   0  // the initial algorithm
@@ -121,6 +121,8 @@ start(void)
 
 		// set p_priority to zero first
 		proc->p_priority = 0;
+		proc->p_share = 1;
+		proc->p_share_count = 1;
 	}
 
 	// Initialize the cursor-position shared variable to point to the
@@ -210,6 +212,12 @@ interrupt(registers_t *reg)
 		current->p_priority =  reg->reg_eax;
 		schedule();
 
+	// for exercise 4B
+	case INT_SYS_SHARE:
+		current->p_share = reg->reg_eax;
+		current->p_share_count = p_share;
+		schedule();
+
 	default:
 		while (1)
 			/* do nothing */;
@@ -275,10 +283,48 @@ schedule(void)
 		}
 		run(&proc_array[pid]);
 		
-	
+	// proportional-share scheduling
 	}else if(scheduling_algorithm == __EXERCISE_4B__){
+		int largest = -1;
+		pid_t j;
+		pid_t proc = 1;
+		// if current pid has share_count == 0, reinitialize it to its share value
+
+		if(proc_array[pid].p_share_count > 0){
+			proc_array[pid].p_share_count--;
+			run(&proc_array[pid]); 
+		}
+		else
+		 	proc_array[pid]->p_share_count = proc_array[pid]->p_share;	
+			// find largest share that has not gone through in this turn
+			for(j = 1; j < NPROCS ; j++){
+				if (proc_array[j].p_state == P_RUNNABLE && proc_array[j].p_share_count != 0){
+					largest = (largest >= proc_array[j].p_share) ? largest : proc_array[j].p_share;	
+				}
+			}
+			// cant' find largeset?
+			// if every process went through a cycle(they all took turn printing out letters already.)
+			if(largest == -1){
+				// reset all counts to share
+				for(j=1; j < NPROCS ; j++){
+					if (proc_array[j].p_state == P_RUNNABLE){
+						// proc_array[j].p_share_count == proc_array[j].p_share;
+						// proc = (proc_array[proc].p_share >= proc_array[j].p_share) ? proc] : j;	
+						largest = (largest >= proc_array[j].p_share) ? largest : proc_array[j].p_share;	
+				}
+			}
+
+			// get pid from largest
+			for(j = 1; j < NPROCS ; j++){
+				if (proc_array[j].p_state == P_RUNNABLE && proc_array[j].p_share == largest){
+					run(&proc_array[j]); 
+					// run()
+				}
+			}
+
+
+		}
 		
-	
 	}else if(scheduling_algorithm == __EXERCISE_7__){
 		
 	}
