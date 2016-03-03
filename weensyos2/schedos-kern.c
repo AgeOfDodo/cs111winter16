@@ -136,13 +136,20 @@ start(void)
 	//   41 = p_priority algorithm (exercise 4.a)
 	//   42 = p_share algorithm (exercise 4.b)
 	//    7 = any algorithm that you may implement for exercise 7
-	scheduling_algorithm = __EXERCISE_4A__;
+	scheduling_algorithm = __EXERCISE_4B__;
 	
 	// for 4A testing purposes
 	proc_array[1].p_priority = __PRIORITY_1__;
 	proc_array[2].p_priority = __PRIORITY_1__;
 	proc_array[3].p_priority = __PRIORITY_1__;
 	proc_array[4].p_priority = __PRIORITY_2__;
+	
+	
+	// for 4B testing purposes
+	proc_array[1].p_share = __SHARE_1__;
+	proc_array[2].p_share = __SHARE_2__;
+	proc_array[3].p_share = __SHARE_3__;
+	proc_array[4].p_share = __SHARE_4__;
 
 	// Switch to the first process.
 	run(&proc_array[1]);
@@ -215,7 +222,7 @@ interrupt(registers_t *reg)
 	// for exercise 4B
 	case INT_SYS_SHARE:
 		current->p_share = reg->reg_eax;
-		current->p_share_count = p_share;
+		current->p_share_count = current->p_share;
 		schedule();
 
 	default:
@@ -288,32 +295,39 @@ schedule(void)
 		int largest = -1;
 		pid_t j;
 		pid_t proc = 1;
-		// if current pid has share_count == 0, reinitialize it to its share value
 
-		if(proc_array[pid].p_share_count > 0){
+		if(proc_array[pid].p_share_count > 1){
 			proc_array[pid].p_share_count--;
 			run(&proc_array[pid]); 
 		}
-		else
-		 	proc_array[pid]->p_share_count = proc_array[pid]->p_share;	
+		else{
+		 		
+			
 			// find largest share that has not gone through in this turn
 			for(j = 1; j < NPROCS ; j++){
 				if (proc_array[j].p_state == P_RUNNABLE && proc_array[j].p_share_count != 0){
 					largest = (largest >= proc_array[j].p_share) ? largest : proc_array[j].p_share;	
 				}
 			}
+			cursorpos = console_printf(cursorpos, 0x200, "L=%d ", largest);
+
+			// current pid has share_count == 0, reinitialize it to its share value
+			//proc_array[pid].p_share_count = proc_array[pid].p_share;
+
 			// cant' find largeset?
 			// if every process went through a cycle(they all took turn printing out letters already.)
 			if(largest == -1){
 				// reset all counts to share
 				for(j=1; j < NPROCS ; j++){
 					if (proc_array[j].p_state == P_RUNNABLE){
-						// proc_array[j].p_share_count == proc_array[j].p_share;
+						proc_array[j].p_share_count == proc_array[j].p_share;
 						// proc = (proc_array[proc].p_share >= proc_array[j].p_share) ? proc] : j;	
 						largest = (largest >= proc_array[j].p_share) ? largest : proc_array[j].p_share;	
+					}
 				}
 			}
-
+			
+			//cursorpos = console_printf(cursorpos, 0x200, "Adjustedlargest=%d  ", largest); 
 			// get pid from largest
 			for(j = 1; j < NPROCS ; j++){
 				if (proc_array[j].p_state == P_RUNNABLE && proc_array[j].p_share == largest){
@@ -321,8 +335,7 @@ schedule(void)
 					// run()
 				}
 			}
-
-
+	
 		}
 		
 	}else if(scheduling_algorithm == __EXERCISE_7__){
