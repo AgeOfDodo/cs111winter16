@@ -33,6 +33,10 @@ typedef struct process {
 
 	// newly added: p_priority for exercise 4A
 	int p_priority;
+	// exercise 4B
+	int p_share;
+	// decrement count everytime it is processed. Reinitialize it if == 0
+	int p_share_count;
 } process_t;
 
 
