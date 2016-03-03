@@ -49,13 +49,17 @@ process_t *current;
 // The preferred scheduling algorithm.
 int scheduling_algorithm;
 
+
 // UNCOMMENT THESE LINES IF YOU DO EXERCISE 4.A
 // Use these #defines to initialize your implementation.
 // Changing one of these lines should change the initialization.
-// #define __PRIORITY_1__ 1
-// #define __PRIORITY_2__ 2
-// #define __PRIORITY_3__ 3
-// #define __PRIORITY_4__ 4
+#define __PRIORITY_1__ 1
+#define __PRIORITY_2__ 2
+#define __PRIORITY_3__ 3
+#define __PRIORITY_4__ 4
+
+// newly added for 4.A
+int alternation = 1;
 
 // UNCOMMENT THESE LINES IF YOU DO EXERCISE 4.B
 // Use these #defines to initialize your implementation.
@@ -114,6 +118,9 @@ start(void)
 
 		// Mark the process as runnable!
 		proc->p_state = P_RUNNABLE;
+
+		// set p_priority to zero first
+		proc->p_priority = 0;
 	}
 
 	// Initialize the cursor-position shared variable to point to the
@@ -128,6 +135,12 @@ start(void)
 	//   42 = p_share algorithm (exercise 4.b)
 	//    7 = any algorithm that you may implement for exercise 7
 	scheduling_algorithm = __EXERCISE_4A__;
+	
+	// for 4A testing purposes
+	proc_array[1].p_priority = __PRIORITY_3__;
+	proc_array[2].p_priority = __PRIORITY_4__;
+	proc_array[3].p_priority = __PRIORITY_1__;
+	proc_array[4].p_priority = __PRIORITY_2__;
 
 	// Switch to the first process.
 	run(&proc_array[1]);
@@ -192,6 +205,11 @@ interrupt(registers_t *reg)
 		// Switch to the next runnable process.
 		schedule();
 
+	// for exercise 4A
+	case INT_SYS_PRIORITY:
+		current->p_priority =  reg->reg_eax;
+		schedule();
+
 	default:
 		while (1)
 			/* do nothing */;
@@ -232,13 +250,26 @@ schedule(void)
 
 	// priority scheduling
 	else if(scheduling_algorithm == __EXERCISE_2__){
-		for(pid = 0; pid < NPROCS ; pid++){
+		for(pid = 1; pid < NPROCS ; pid++){
 			if (proc_array[pid].p_state == P_RUNNABLE)
 				break;
 		}
 		run(&proc_array[pid]);
 
 	}else if(scheduling_algorithm == __EXERCISE_4A__){
+		pid_t topPriority = 0;
+
+		for(pid = 1; pid < NPROCS ; pid++){
+			if (proc_array[pid].p_state == P_RUNNABLE)
+				if (proc_array[topPriority].p_priority == proc_array[pid].p_priority){
+					topPriority = (alternation) ? topPriority : pid
+					alternation	= (alternation) ? 0 : 1;
+
+ 				}else{
+					topPriority = (proc_array[topPriority].p_priority > proc_array[pid].p_priority) ? topPriority : pid;
+				}
+		}
+		run(&proc_array[topPriority]);
 		
 	
 	}else if(scheduling_algorithm == __EXERCISE_4B__){
