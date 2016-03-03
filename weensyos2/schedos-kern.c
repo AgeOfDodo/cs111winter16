@@ -137,8 +137,8 @@ start(void)
 	scheduling_algorithm = __EXERCISE_4A__;
 	
 	// for 4A testing purposes
-	proc_array[1].p_priority = __PRIORITY_3__;
-	proc_array[2].p_priority = __PRIORITY_4__;
+	proc_array[1].p_priority = __PRIORITY_1__;
+	proc_array[2].p_priority = __PRIORITY_1__;
 	proc_array[3].p_priority = __PRIORITY_1__;
 	proc_array[4].p_priority = __PRIORITY_2__;
 
@@ -259,21 +259,22 @@ schedule(void)
 	}else if(scheduling_algorithm == __EXERCISE_4A__){
 		int topPriority = 0;
 		pid_t j;
+
 		// get the top priority number 
 		for(j = 1; j < NPROCS ; j++){
 			if (proc_array[j].p_state == P_RUNNABLE){
-				topPriority = (topPriority >= proc_array[j].p_priority) ? topPriority : proc_array[j].p_priority;
+				topPriority = (topPriority >= proc_array[j].p_priority) ? topPriority : proc_array[j].p_priority;	
 			}
 		}
 		// alternate the processes if there are more than one with top priority
 		while (1) {
 			pid = (pid + 1) % NPROCS;
-			for(; pid < NPROCS ; pid++){
-				if (proc_array[pid].p_state == P_RUNNABLE && proc_array[pid].p_priority == topPriority)
+			if (proc_array[pid].p_state == P_RUNNABLE && proc_array[pid].p_priority == topPriority)
 				break;
-			}
-			run(&proc_array[pid]);
+	
 		}
+		run(&proc_array[pid]);
+		
 	
 	}else if(scheduling_algorithm == __EXERCISE_4B__){
 		
