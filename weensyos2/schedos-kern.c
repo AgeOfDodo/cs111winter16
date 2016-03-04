@@ -92,7 +92,7 @@ start(void)
 
 	// Set up hardware (schedos-x86.c)
 	segments_init();
-	interrupt_controller_init(0);
+	interrupt_controller_init(1);
 	console_clear();
 
 	// Initialize process descriptors as empty
@@ -229,6 +229,14 @@ interrupt(registers_t *reg)
 		current->p_share = reg->reg_eax;
 		current->p_share_count = current->p_share;
 		schedule();
+
+	case INT_SYS_PRINT:{
+		uint16_t * cursorpos = *(uint16_t **)reg->reg_eax;
+		uint16_t c = (uint16_t) reg->reg_ecx;
+		*cursorpos++ = 	c;
+		schedule();
+	}
+
 
 	default:
 		while (1)
