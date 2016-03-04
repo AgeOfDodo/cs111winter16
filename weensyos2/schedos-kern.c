@@ -301,8 +301,10 @@ schedule(void)
 		pid_t j;
 		pid_t proc = 1;
 		proc_array[pid].p_share_count--;
-		if(proc_array[pid].p_share_count > 0){
-			//cursorpos = console_printf(cursorpos, 0x200, "cnt=%d ", proc_array[pid].p_share_count );
+		//cursorpos = console_printf(cursorpos, 0x200, "pid=%d ", pid );
+		
+		if(proc_array[pid].p_state == P_RUNNABLE && proc_array[pid].p_share_count > 0){
+		//	cursorpos = console_printf(cursorpos, 0x200, "c=%d ", proc_array[pid].p_share_count );
 			
 			run(&proc_array[pid]); 
 		}
@@ -315,7 +317,7 @@ schedule(void)
 					largest = (largest >= proc_array[j].p_share) ? largest : proc_array[j].p_share;	
 				}
 			}
-			//cursorpos = console_printf(cursorpos, 0x200, "L=%d ", largest);
+//			cursorpos = console_printf(cursorpos, 0x200, "L=%d ", largest);
 
 			// current pid has share_count == 0, reinitialize it to its share value
 			//proc_array[pid].p_share_count = proc_array[pid].p_share;
@@ -333,13 +335,16 @@ schedule(void)
 				}
 			}
 			
-			//cursorpos = console_printf(cursorpos, 0x200, "Adjustedlargest=%d  ", largest); 
+//			cursorpos = console_printf(cursorpos, 0x200, "A=%d  ", largest); 
 			// get pid from largest
 			for(j = 1; j < NPROCS ; j++){
 				if (proc_array[j].p_state == P_RUNNABLE && proc_array[j].p_share == largest){
 					break;									
 				}
 			}
+
+//			cursorpos = console_printf(cursorpos, 0x200, "j=%d  ", j); 
+						
 			run(&proc_array[j]); 
 
 	
