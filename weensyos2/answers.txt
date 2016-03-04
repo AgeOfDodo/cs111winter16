@@ -50,12 +50,15 @@ BOTH!
 
 Exercise 5:
 
+The first clock interrupt occurs in process 4. During the 5th cycle, '4' is not printed. 
+Therefore it must be because the timer is up and interrupt is issued. 
 
 (Exercise 6 is a coding exercise)
 
 
 Anything else you'd like us to know:
 
-
+Instead of having the application run process 1 on start, I modified the code so that the 
+application call schedule() on start. (This way it makes more sense when using priority scheduling methods.)
 
 Extra credit exercises:
