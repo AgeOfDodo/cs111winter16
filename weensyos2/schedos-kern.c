@@ -136,7 +136,7 @@ start(void)
 	//   41 = p_priority algorithm (exercise 4.a)
 	//   42 = p_share algorithm (exercise 4.b)
 	//    7 = any algorithm that you may implement for exercise 7
-	scheduling_algorithm = __EXERCISE_4B__;
+	scheduling_algorithm = 0;
 	
 	// for 4A testing purposes
 	proc_array[1].p_priority = __PRIORITY_1__;
@@ -231,10 +231,8 @@ interrupt(registers_t *reg)
 		schedule();
 
 	case INT_SYS_PRINT:{
-		uint16_t * cursorpos = *(uint16_t **)reg->reg_eax;
-		uint16_t c = (uint16_t) reg->reg_ecx;
-		*cursorpos++ = 	c;
-		schedule();
+		*cursorpos++ = (uint16_t) reg->reg_eax;
+		run(current);
 	}
 
 
