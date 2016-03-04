@@ -58,6 +58,9 @@ Therefore it must be because the timer is up and interrupt is issued.
 
 Anything else you'd like us to know:
 
+For exercise 4B, I created share_count too keep track of how many characters in each process are printed in the cycle. If all share_count 
+have all decremented to zeros, then it means that a cycle is finished, and all share_count is reinitialized to the number of share.
+
 Instead of having the application run process 1 on start, I modified the code so that the 
 application call schedule() on start. (This way it makes more sense when using priority scheduling methods.)
 
