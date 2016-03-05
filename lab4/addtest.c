@@ -28,11 +28,17 @@ profile
 long long counter = 0;
 
 
+int opt_yield;
 
 void add(long long *pointer, long long value) {
     long long sum = *pointer + value;
-    *pointer = sum;
+        if (opt_yield)
+            pthread_yield();
+        *pointer = sum;
 }
+
+
+
 
 void* threadfunc(int num_iterations){
 	int i;
@@ -66,6 +72,7 @@ int main(int argc, char **argv) {
 // SUBCOMMAND
    		{"iterations",       optional_argument,        0,  'i' },
         {"threads",       optional_argument,        0,  't' },
+        {"yield",       optional_argument,        0,  'y' },
         {0,0,0,0}
         
     };
@@ -87,6 +94,13 @@ int main(int argc, char **argv) {
     	case 't':
     		if(optarg != NULL)
     			thread = atoi(optarg);
+    	break;
+
+    	case 'y':
+    		if(optarg != NULL)
+    			opt_yield = 1;
+    		if (atoi(optarg) != 1)
+    			printf("invalid yield argument\n");
     	break;
 
     }
