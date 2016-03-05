@@ -28,7 +28,7 @@ profile
 long long counter = 0;
 
 
-int opt_yield;
+int opt_yield = 0;
 
 void add(long long *pointer, long long value) {
     long long sum = *pointer + value;
