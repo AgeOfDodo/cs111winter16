@@ -110,7 +110,7 @@ int main(int argc, char **argv) {
     int i;
     clock_gettime(CLOCK_MONOTONIC , &startTime);
     for(i = 0; i < thread; i++) {
-		int ret = pthread_create((pthread_t * __restrict__) &thread_array[i], NULL, void * (*)(void *) threadfunc, (void *) &iteration);  //to create thread
+		int ret = pthread_create((pthread_t * __restrict__) &thread_array[i], NULL, (void * (*)(void *)) threadfunc, (void *) &iteration);  //to create thread
 			if (ret != 0) { //error handling
 				fprintf(stderr, "Error creating thread %d\n", i);
 				exit(1);
