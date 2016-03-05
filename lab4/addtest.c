@@ -108,7 +108,7 @@ int main(int argc, char **argv) {
 }
     //create threads
 	printf("About to create threads\n");
-    pid_t* thread_array = malloc(sizeof(pid_t) * thread);
+    pthread_t* thread_array = malloc(sizeof(pthread_t) * thread);
     printf("Just malloced\n");
     int i;
     clock_gettime(CLOCK_MONOTONIC , &startTime);
