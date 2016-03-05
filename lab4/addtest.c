@@ -106,11 +106,11 @@ int main(int argc, char **argv) {
     }
 }
     //create threads
-    pid_t* thread_array = malloc(sizeof(pid_t * thread));
+    pid_t* thread_array = malloc(sizeof(pid_t) * thread);
     int i;
     clock_gettime(CLOCK_MONOTONIC , &startTime);
     for(i = 0; i < thread; i++) {
-		int ret = pthread_create(&threads[i], NULL, threadfunc, (void *) &iteration);  //to create thread
+		int ret = pthread_create(&thread_array[i], NULL, threadfunc, (void *) &iteration);  //to create thread
 			if (ret != 0) { //error handling
 				fprintf(stderr, "Error creating thread %d\n", i);
 				exit(1);
@@ -120,8 +120,8 @@ int main(int argc, char **argv) {
 	//wait for all to finish
 	//int pthread_join(pthread_t thread, void **retval);
 //waits for thread to terminate
-	for(i = 0; i < num_threads; i++) {
-		int ret = pthread_join(thread[i], NULL);
+	for(i = 0; i < thread; i++) {
+		int ret = pthread_join(thread_array[i], NULL);
 		if (ret != 0) { //error handling
 				fprintf(stderr, "Error joining thread %d\n", i);
 				exit(1);
@@ -146,7 +146,7 @@ void add(long long *pointer, long long value) {
     }
 
 
-    int total_time = endTime - startTime;
+    int total_time = endTime.tv_nsec - startTime.tv_nsec;
     printf("elapsed time: %d\n", total_time);
 
     int avg = total_time / num_ops;
