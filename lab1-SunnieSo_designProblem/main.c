@@ -1,9 +1,8 @@
-/* CS111 Winter 2016 Lab1a
-See README for further information
+/* CS111 Winter 2016 Lab1b DESIGN PROBLEM
 
-TODO:
-action handler: change printf to write or whatever
-profile
+Extend the shell to wait for individual subcommands, instead of waiting for them all to finish.
+
+See README for further information
  */
 
 #include <stdlib.h>
@@ -18,12 +17,7 @@ profile
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
-#include <sys/resource.h>
-#include <sys/time.h>
-#include <math.h>
-
 #define MAX(a,b) (((a)>(b))?(a):(b))
-
 
 int strIsNum(char* str){
   int j;
@@ -111,6 +105,11 @@ struct waitInfo{
   int end;
 };
 
+// void sig_handler(int sig){
+//   // printf("sig_handler(%d)\n", sig);
+//   fprintf(stderr, "%d caught\n", sig);
+//   exit(sig);
+// }
 
 void catch_handler(int sig, siginfo_t *s, void *arg){
   fprintf(stderr, "%d caught\n", sig);
@@ -120,41 +119,8 @@ void pause_handler(int sig, siginfo_t *s, void *arg){
   fprintf(stderr, "pause\n");
 }
 int main(int argc, char **argv) {
-
-  int profile = 0;
-  int who = RUSAGE_SELF;
-
-
-
-  struct rusage usage_start;
-  struct rusage usage_end;
-  struct rusage children;    
-
-  //for --wait, collect the time usage from all waited child processes
-  long long childrenTimeu = 0;
-  long long childrenTimes = 0;
-  //the beginning of the while loop
-  long long start_u;
-  long long start_s;
-  //the beginning of the whole program
-  long long begin_u;
-  long long begin_s;
-
-  int ret;
-
-  //[profile]
-  //get the beginning usage 
-  getrusage(RUSAGE_SELF, &usage_start);
-  begin_u = (long long )usage_start.ru_utime.tv_sec*pow(10, 6) + (long long )usage_start.ru_utime.tv_usec;
-  begin_s = (long long )usage_start.ru_stime.tv_sec*pow(10, 6) + (long long )usage_start.ru_stime.tv_usec;
-  //printf("[profile] begin = %lld\n", beginu );
-  
-  // ret = getrusage(who, &usage);
-
   // c holds return value of getopt_long
   int c;
-
-
 
   // j is an iterator for for loops
   int j;
@@ -182,10 +148,7 @@ int main(int argc, char **argv) {
   int oflag = 0;
   char oflag_str[1000];
   strcpy(oflag_str, "");
-  // [profile]
-  // if the oflag is not 0, it means that we are currently at a potential beginning of file flag serie
-  // (ex. --append --create --rdonly . we only wanna get get usage right before --append and within the --rdonly clause) 
-  
+
   // Verbose can be on or off, automatically set to off
   int verbose = 0;
 
@@ -196,23 +159,21 @@ int main(int argc, char **argv) {
 
   // Signal handling.
   struct sigaction sa;
+  // // memset (&sa, '\0', sizeof(sa));
+  // sa.sa_sigaction = &sig_act;
+  // sa.sa_flags = SA_SIGINFO;
+  // sa.sa_handler = &sig_handler;
+  // restart the system call if possible.
+  // sa.sa_flags = SA_RESTART;
+
 
   // Parse options
   while (1) {
-
-    if(profile && (oflag==0)){
-      getrusage(RUSAGE_SELF,&usage_start);
-
-      start_u = (long long ) (usage_start.ru_utime.tv_sec*pow(10, 6) +  usage_start.ru_utime.tv_usec);
-      start_s = (long long ) (usage_start.ru_stime.tv_sec*pow(10, 6) +  usage_start.ru_stime.tv_usec);        
-
-      // printf("[profile] begins = %lld\n", (long long) start_s);
-    }
     int option_index = 0;
     static struct option long_options[] = {
 // SUBCOMMAND
     	  {"command",     required_argument,  0,  'c' },
-        {"wait",        no_argument,        0,  'z' },
+        {"wait",        required_argument,  0,  'z' },
 // FILE FLAGS
         {"append",      no_argument,        0,  6 },
         {"cloexec",     no_argument,        0,  7 },
@@ -260,11 +221,6 @@ int main(int argc, char **argv) {
     
 //command
     case 'c': { // command (format: --command i o e cmd args_array)
-      //[profile]
-      //On piazza, it says that we only time whatever happens in the parent process 
-      if(profile && (oflag == 0)){ 
-        getrusage(RUSAGE_SELF, &usage_start);
-      }
       int i, o, e; // stdin, stdout, stderr
 
       //store the file descripter numbers and check for errors
@@ -377,66 +333,67 @@ int main(int argc, char **argv) {
       wait_info[wait_info_cur].childPid = pid;
       wait_info[wait_info_cur].begin = cmd_begin;
       wait_info[wait_info_cur++].end = cmd_end;
-
-      //[profile]
-      // //On piazza, it says that we only time whatever happens in the parent process     
-      if(profile){
-        getrusage(RUSAGE_SELF, &usage_end);
-        // long long end= (long long)usage.ru_utime.tv_sec*pow(10, 6) + (long long)usage.u_utime.tv_usec;
-        long long endu = (long long ) (usage_end.ru_utime.tv_sec*pow(10, 6) +  usage_end.ru_utime.tv_usec);
-        long long ends = (long long ) (usage_end.ru_stime.tv_sec*pow(10, 6) +  usage_end.ru_stime.tv_usec);
-        // printf("endu = %lld\n", ends );
-        printf("[profile] user CPU time => %lld us\t system CPU time => %lld us\n",
-        endu - start_u, ends - start_s);
-      }
+      
       break;
     }
 //wait
+    // DESIGN PROBLEM EXTENDED VERSION.
     case 'z': {
       if (verbose){
-        printf("--wait\n");
+        printf("--wait %s\n", optarg);
       }
 
+      //if spedified all, then do the original version.
+      if(!strcmp(optarg, "all")){
+        pid_t returnedPid;
+        int j1;
 
-      //wait any child process to finish. 0 is for blocking.
-      pid_t returnedPid;
-      int j1;
-      while((returnedPid = waitpid(0, &status, 0) )!= -1){
-       //WEXITSTATUS returns the exit status of the child.
-        int waitStatus = WEXITSTATUS(status);
-        printf("%d ", waitStatus);
+        while((returnedPid = waitpid(0, &status, 0) )!= -1){
+         //WEXITSTATUS returns the exit status of the child.
+          int waitStatus = WEXITSTATUS(status);
+          printf("%d ", waitStatus);
 
-        //the main program needs to return the with biggest value of exit status.
-        exit_status = MAX(exit_status, waitStatus);
-        //find the corresponding wait_info
-        for(j = 0 ; j != wait_info_cur; j++){
-          if(returnedPid == (wait_info[j]).childPid)
+          exit_status = MAX(exit_status, waitStatus);
+          //find the corresponding wait_info
+          for(j = 0 ; j != wait_info_cur; j++){
+            if(returnedPid == (wait_info[j]).childPid)
+              break;
+          }
+          //print out the corresponding command lines from wait_info data structure.
+          int j1= j;
+          for (j = wait_info[j1].begin; j != wait_info[j1].end; j++) {
+            printf("%s ", argv[j]);
+          }
+          printf("\n");
+        }
+
+      }else{
+          if(!strIsNum(optarg)){
+            fprintf(stderr, "Error: Design Problem: --wait argument should be a valid number.\n");
+            exit_status = MAX(exit_status,1);
+          }
+          // command descripter
+          int cmdd = atoi(optarg);
+          // find the corresponding command struct in wait_info array
+          // printf("cmdd = %d, wait_info_cur = %d\n",cmdd, wait_info_cur);
+          if (cmdd >= wait_info_cur){
+            fprintf(stderr, "Error: Design Problem: invalid command descripter.\n");
+            exit_status = MAX(exit_status, 1);
             break;
-        }
-        //print out the corresponding command lines from wait_info data structure.
-        int j1= j;
-        for (j = wait_info[j1].begin; j != wait_info[j1].end; j++) {
-          printf("%s ", argv[j]);
-        }
-        printf("\n");
-
-
-      }
-        //[profile] 
-        // on Piazza, Zhaoxing said:  you time 
-        // (1) whatever happens in the parent process and 
-        // (2) sum of all child processes you have waited or report each child process separately.
-      if(profile){
-        getrusage(RUSAGE_CHILDREN, &children);
-        // long long end= (long long)usage.ru_utime.tv_sec*pow(10, 6) + (long long)usage.u_utime.tv_usec;
-        childrenTimeu = (long long ) (children.ru_utime.tv_sec*pow(10, 6) +  children.ru_utime.tv_usec);
-        childrenTimes = (long long ) (children.ru_stime.tv_sec*pow(10, 6) +  children.ru_stime.tv_usec);
-        // printf("endu = %lld\n", ends );
-        printf("[profile] Child Processes Total...\n\t  user CPU time => %lld us\t system CPU time => %lld us\n",
-        childrenTimeu , childrenTimes );
+          }
+          // printf("wait_info[cmdd].childPid=%d\n", wait_info[cmdd].childPid);
+          waitpid(wait_info[cmdd].childPid, &status, 0);
+          int waitStatus = WEXITSTATUS(status);
+          printf("%d ",waitStatus);
+          
+          for (j = wait_info[cmdd].begin; j != wait_info[cmdd].end; j++) {
+            printf("%s ", argv[j]);
+          }
+          printf("\n");
       }
       break;
     }
+    
      
 //append
     case 6:
@@ -533,16 +490,6 @@ int main(int argc, char **argv) {
 
       //clean oflag content.
       oflag = 0;
-      if(profile){
-        getrusage(RUSAGE_SELF, &usage_end);
-        // long long end= (long long)usage.ru_utime.tv_sec*pow(10, 6) + (long long)usage.u_utime.tv_usec;
-        long long endu = (long long ) (usage_end.ru_utime.tv_sec*pow(10, 6) +  usage_end.ru_utime.tv_usec);
-        long long ends = (long long ) (usage_end.ru_stime.tv_sec*pow(10, 6) +  usage_end.ru_stime.tv_usec);
-        // printf("endu = %lld\n", ends );
-        printf("[profile] user CPU time => %lld us\t system CPU time => %lld us\n",
-        endu - start_u, ends - start_s);
-      }
-
       break;   
 //pipe
     case 20:
@@ -573,15 +520,7 @@ int main(int argc, char **argv) {
       fd_array[fd_array_cur++] = pipefd[0];
       fd_isPipe[fd_array_cur] = 1;
       fd_array[fd_array_cur++] = pipefd[1];
-      if(profile){
-        getrusage(RUSAGE_SELF, &usage_end);
-        // long long end= (long long)usage.ru_utime.tv_sec*pow(10, 6) + (long long)usage.u_utime.tv_usec;
-        long long endu = (long long ) (usage_end.ru_utime.tv_sec*pow(10, 6) +  usage_end.ru_utime.tv_usec);
-        long long ends = (long long ) (usage_end.ru_stime.tv_sec*pow(10, 6) +  usage_end.ru_stime.tv_usec);
-        // printf("endu = %lld\n", ends );
-        printf("[profile] user CPU time => %lld us\t system CPU time => %lld us\n",
-        endu - start_u, ends - start_s);
-      }
+
       break;
 
 //close
@@ -601,15 +540,6 @@ int main(int argc, char **argv) {
       }
       close(fd_array[N]);
       fd_array[N] = -1;
-      if(profile){
-        getrusage(RUSAGE_SELF, &usage_end);
-        // long long end= (long long)usage.ru_utime.tv_sec*pow(10, 6) + (long long)usage.u_utime.tv_usec;
-        long long endu = (long long ) (usage_end.ru_utime.tv_sec*pow(10, 6) +  usage_end.ru_utime.tv_usec);
-        long long ends = (long long ) (usage_end.ru_stime.tv_sec*pow(10, 6) +  usage_end.ru_stime.tv_usec);
-        // printf("endu = %lld\n", ends );
-        printf("[profile] user CPU time => %lld us\t system CPU time => %lld us\n",
-        endu - start_u, ends - start_s);
-      }
       break;
       
 //verbose
@@ -621,7 +551,6 @@ int main(int argc, char **argv) {
       if(verbose){
         printf("--profile\n");
       }
-      profile = 1;
       break;
 //abort
     case 23:
@@ -658,15 +587,7 @@ int main(int argc, char **argv) {
       // //this should cause sig_fault
       // int *a = NULL;
       // int b = *a;
-      if(profile){
-        getrusage(RUSAGE_SELF, &usage_end);
-        // long long end= (long long)usage.ru_utime.tv_sec*pow(10, 6) + (long long)usage.u_utime.tv_usec;
-        long long endu = (long long ) (usage_end.ru_utime.tv_sec*pow(10, 6) +  usage_end.ru_utime.tv_usec);
-        long long ends = (long long ) (usage_end.ru_stime.tv_sec*pow(10, 6) +  usage_end.ru_stime.tv_usec);
-        // printf("endu = %lld\n", ends );
-        printf("[profile] user CPU time => %lld us\t system CPU time => %lld us\n",
-        endu - start_u, ends - start_s);
-      }
+      
       break;
 //ignore
     case 25:
@@ -691,15 +612,7 @@ int main(int argc, char **argv) {
       }
       // //testing purpose
       // sleep(10);
-      if(profile){
-        getrusage(RUSAGE_SELF, &usage_end);
-        // long long end= (long long)usage.ru_utime.tv_sec*pow(10, 6) + (long long)usage.u_utime.tv_usec;
-        long long endu = (long long ) (usage_end.ru_utime.tv_sec*pow(10, 6) +  usage_end.ru_utime.tv_usec);
-        long long ends = (long long ) (usage_end.ru_stime.tv_sec*pow(10, 6) +  usage_end.ru_stime.tv_usec);
-        // printf("endu = %lld\n", ends );
-        printf("[profile] user CPU time => %lld us\t system CPU time => %lld us\n",
-        endu - start_u, ends - start_s);
-      }
+      
       break;
 //default
     case 26:
@@ -720,15 +633,6 @@ int main(int argc, char **argv) {
           exit_status = MAX(exit_status, 1);
           continue;
       }
-      if(profile){
-        getrusage(RUSAGE_SELF, &usage_end);
-        // long long end= (long long)usage.ru_utime.tv_sec*pow(10, 6) + (long long)usage.u_utime.tv_usec;
-        long long endu = (long long ) (usage_end.ru_utime.tv_sec*pow(10, 6) +  usage_end.ru_utime.tv_usec);
-        long long ends = (long long ) (usage_end.ru_stime.tv_sec*pow(10, 6) +  usage_end.ru_stime.tv_usec);
-        // printf("endu = %lld\n", ends );
-        printf("[profile] user CPU time => %lld us\t system CPU time => %lld us\n",
-        endu - start_u, ends - start_s);
-      }
       break;
 //pause    
     case 27:
@@ -743,6 +647,10 @@ int main(int argc, char **argv) {
     default:
         fprintf(stderr, "Error: ?? getopt returned character code 0%o ??\n", c);
     }
+    // freeArgs:
+    // for(j = 0; j != args_array_cur; j++){
+    //   printf("freeing args_array %s\n", args_array[j]);
+    // }
     free(args_array);
     // printf("done freeing\n");
   }
@@ -754,23 +662,13 @@ int main(int argc, char **argv) {
     	close(fd_array[fd_array_cur]);
   	fd_array_cur--;
   }
+
+
+
   // Free dynamically allocated memory
   free(fd_array);
   free(fd_isPipe);
   free(wait_info);
-
-  //[profile] 
-  // get the ending usage of the whole program. Subtract this with the beginning usage data.
-  if(profile){
-
-    getrusage(RUSAGE_SELF, &usage_end);
-    // long long end= (long long)usage.ru_utime.tv_sec*pow(10, 6) + (long long)usage.u_utime.tv_usec;
-    long long endu = (long long )(usage_end.ru_utime.tv_sec*pow(10, 6) +  usage_end.ru_utime.tv_usec);
-    long long ends = (long long )(usage_end.ru_stime.tv_sec*pow(10, 6) +  usage_end.ru_stime.tv_usec);
-    printf("endu = %lld\n", ends );
-    printf("[profile] Total...\n\t  user CPU time => %lld us\t system CPU time => %lld us\n",
-      endu - begin_u + childrenTimeu, ends - begin_s + childrenTimes);
-  }
   // printf("EXit with %d\n",exit_status );
   exit(exit_status);
 }

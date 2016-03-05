@@ -4,5 +4,11 @@
 
 
 #fdmove -c 2 1
+
 nice -10 echo blah
 #foreground { } 
+
+echo "first line"
+
+foreground { echo "this is prog1" } echo "this is prog2"
+

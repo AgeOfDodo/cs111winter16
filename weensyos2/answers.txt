@@ -1,0 +1,67 @@
+Name: Sunnie So
+UCLA ID: 704430286
+
+Collaborators:
+
+-------------------------------------------------------------------------------
+
+Response to Exercise 1:
+
+The name of the scheduling algorithm is: Round Robin
+
+(Exercise 2 is a coding exercise)
+
+
+Response to Exercise 3:
+
+Average turnaround time for scheduling_algorithm 0: 
+	turnaround time for proc 1 is 320*4 - 3 ms 
+	turnaround time for proc 2 is 320*4 - 2 ms
+	turnaround time for proc 3 is 320*4 - 1 ms
+	turnaround time for proc 4 is 320*4ms
+	Average turnaround time is (320*4*4 - 6)/4 = 1280 - 1.5 ms = 1278.5ms
+
+Average turnaround time for scheduling_algorithm 1:
+	turnaround time for proc 1 is 320*1 ms 
+	turnaround time for proc 2 is 320*2 ms
+	turnaround time for proc 3 is 320*3 ms
+	turnaround time for proc 4 is 320*4 ms
+	Average turnaround time is (320*(10))/4 = 800 ms
+
+Average wait time for scheduling_algorithm 0:
+	wait time for proc 1 is 0ms 
+	wait time for proc 2 is 1ms
+	wait time for proc 3 is 2ms
+	wait time for proc 4 is 3ms
+	Average wait time is (0+1+2+3)/4 = 6/4 = 1.5ms
+
+Average wait time for scheduling_algorithm 1:
+	wait time for proc 1 is 0ms 
+	wait time for proc 2 is 320*1ms
+	wait time for proc 3 is 320*2ms
+	wait time for proc 4 is 320*3ms
+	Average wait time is (0+320*6)/4 = 480ms
+
+
+Exercise 4:
+
+Did you complete Exercise 4A, Exercise 4B, or both for extra credit?
+BOTH!
+
+Exercise 5:
+
+The first clock interrupt occurs in process 4. During the 5th cycle, '4' is not printed. 
+Therefore it must be because the timer is up and interrupt is issued. 
+
+(Exercise 6 is a coding exercise)
+
+
+Anything else you'd like us to know:
+
+For exercise 4B, I created share_count too keep track of how many characters in each process are printed in the cycle. If all share_count 
+have all decremented to zeros, then it means that a cycle is finished, and all share_count is reinitialized to the number of share.
+
+Instead of having the application run process 1 on start, I modified the code so that the 
+application call schedule() on start. (This way it makes more sense when using priority scheduling methods.)
+
+Extra credit exercises:

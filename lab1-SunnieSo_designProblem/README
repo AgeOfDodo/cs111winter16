@@ -1,0 +1,30 @@
+README
+
+CS 111 Operating Systems Principles, Winter 2016
+Sunnie So <704430286>
+
+
+Lab1b:
+
+--wait: 
+	I used waitpid() to reap the zombie child processes and obtain their exit 
+	status. However, waitpid() can not tell us which command it executed. Therefore,
+	I implemented a data structure "waitInfo" that stores the child pid, command name, 
+	and the argument list. When the program reaches --wait option, it can look up the 
+	commend and arguments using the child pid that waitpid() returns. 
+	I dynamically constructed an array of "waitInfo" to keep track of all "waitInfo" 
+	data. When a child process is created, the parent process records the corresponding
+	values into a new "waitInfo" in the waitInfo array.
+-----------------------------------------------------------------------
+Design Problem
+Question: "Extend the shell to wait for individual subcommands, instead of waiting for them all to finish.""
+
+Use the same wait_info structure.
+In this version, --wait takes one argument N, which is the "command descripter". 
+This command descripter is just the index of the wait_info array. The program will find the corrsponding wait_info
+and print the info.
+
+If the user still wanna waits for all, then the user can enter "--wait all"
+
+-----------------------------------------------------------------------
+Lab1c: To be continue...
