@@ -78,6 +78,7 @@ int main(int argc, char **argv) {
     };
 
     // get the next option
+    printf("Parsing options\n");
     c = getopt_long(argc, argv, "", long_options, &option_index);
    
     // break when there are no further options to parse
@@ -106,9 +107,12 @@ int main(int argc, char **argv) {
     }
 }
     //create threads
+	printf("About to create threads\n");
     pid_t* thread_array = malloc(sizeof(pid_t) * thread);
+    printf("Just malloced\n");
     int i;
     clock_gettime(CLOCK_MONOTONIC , &startTime);
+    printf("Just got time\n");
     for(i = 0; i < thread; i++) {
 		int ret = pthread_create((pthread_t * __restrict__) &thread_array[i], NULL, (void * (*)(void *)) threadfunc, (void *) &iteration);  //to create thread
 			if (ret != 0) { //error handling
@@ -120,6 +124,7 @@ int main(int argc, char **argv) {
 	//wait for all to finish
 	//int pthread_join(pthread_t thread, void **retval);
 //waits for thread to terminate
+	printf("About to join threads\n");
 	for(i = 0; i < thread; i++) {
 		int ret = pthread_join(thread_array[i], NULL);
 		if (ret != 0) { //error handling
