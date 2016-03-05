@@ -60,7 +60,7 @@ int main(int argc, char **argv) {
   while (1) {
 
       // printf("[profile] begins = %lld\n", (long long) start_s);
-    }
+    
     int option_index = 0;
     static struct option long_options[] = {
 // SUBCOMMAND
@@ -90,7 +90,7 @@ int main(int argc, char **argv) {
     	break;
 
     }
-
+}
     //create threads
     pid_t* thread_array = malloc(sizeof(pid_t * thread));
     int i;
@@ -123,13 +123,21 @@ void add(long long *pointer, long long value) {
     long long sum = *pointer + value;
     *pointer = sum;
 } */
+
+        //print number of operations
+    long num_ops = thread * iteration * 2;
+    printf("%d threads x %d iterations x (add + subtract) = %d\n", thread, iteration, num_ops);
     if(counter != 0){
-    	fprintf(stderr, "Error! Counter is not zero!\n")
-    	exit(1);
+    	fprintf(stderr, "ERROR: final count = %d\n", counter);
     }
 
-    //print number of operations
-    //printf()
+
+    int total_time = endTime - startTime;
+    printf("elapsed time: %d\n", total_time);
+
+    int avg = total_time / num_ops;
+    printf("per operation: %d ns\n", avg);
+
 
 
 
