@@ -152,10 +152,10 @@ void add(long long *pointer, long long value) {
     }
 
 
-    int total_time = endTime.tv_nsec - startTime.tv_nsec;
+    long long total_time = endTime.tv_nsec - startTime.tv_nsec;
     printf("elapsed time: %d\n", total_time);
 
-    int avg = total_time / num_ops;
+    long long avg = total_time / num_ops;
     printf("per operation: %d ns\n", avg);
 
 
