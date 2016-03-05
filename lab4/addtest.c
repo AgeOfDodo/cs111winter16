@@ -134,6 +134,7 @@ int main(int argc, char **argv) {
 	//need for loop to wait for all
 	//also do error handling
 	}
+	printf("Succesfully join threads\n");
 
 	//int clock_gettime(clocked_t clk_id , struct timespec* tp) 
  	clock_gettime(CLOCK_MONOTONIC , &endTime);
