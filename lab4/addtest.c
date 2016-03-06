@@ -145,7 +145,7 @@ void add(long long *pointer, long long value) {
 } */
 
         //print number of operations
-    long num_ops = thread * iteration * 2;
+    long long num_ops = thread * iteration * 2;
     printf("%d threads x %d iterations x (add + subtract) = %d\n", thread, iteration, num_ops);
     if(counter != 0){
     	fprintf(stderr, "ERROR: final count = %d\n", counter);

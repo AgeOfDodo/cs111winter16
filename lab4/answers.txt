@@ -1,0 +1,22 @@
+Questions 1.1
+1.
+2.
+
+
+Q 1.1 why does it take this many threads or iterations?
+if number of threads/iterations is small, “its not possiblet to say the result is wrong” 
+no conflicts of calling add() if few enough threads? so smaller iterations rarely fail?
+
+Q 1.2
+if # iterations small, then overhead of creating threads, 
+
+
+--------------------
+
+Questions 1.2
+1.
+2.
+3.
+4.
+
+//overhead? for 1.
