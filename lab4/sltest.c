@@ -17,18 +17,10 @@
 
 #include <pthread.h>
 #include <time.h>
+#include "SortedList.h"
 
 long long counter = 0;
-
-
-
-struct SortedListElement {
-	struct SortedListElement *prev;
-	struct SortedListElement *next;
-	const char *key;
-};
-typedef struct SortedListElement SortedList_t;
-typedef struct SortedListElement SortedListElement_t;
+int opt_yield = 0;
 
 
 // for debugging purpose
@@ -46,71 +38,8 @@ void SortedList_display(SortedList_t *list){
 		i++;
 	} while (head != list);
 }
-void SortedList_insert(SortedList_t *list, SortedListElement_t *element){
-	// printf("insert\n");
-	SortedListElement_t *p = list;
-	SortedListElement_t *n = list->next;
-	while(n != list){
-		if(strcmp(element->key, n->key) <= 0)
-			break;
-	}
-	p = n;
-	n = n->next;
-	element->prev = p;
-	element->next = n;
-	p->next = element;
-	n->prev = element;
-}
 
 
-int SortedList_delete( SortedListElement_t *element){
-	SortedListElement_t *n = element->next;
-	SortedListElement_t *p = element->prev;
-	if(n->prev != element)
-		return -1;
-	if(p->next != element)
-		return 1;
-	n->prev = p;
-	p->next = n;
-	element->next = NULL;
-	element->prev = NULL;
-
-	return 0;
-}
-
-
-SortedListElement_t *SortedList_lookup(SortedList_t *list, const char *key){
-	if(list == list->next)	
-		return NULL;
-	SortedList_t* head = list;
-	list = list->next;
-	do{
-		if(strcmp(list->key, key) == 0)
-			return list;
-		list = list->next;
-	} while (head != list);
-	return NULL;
-}
-
-int SortedList_length(SortedList_t *list){
-	if(list == list->next)	
-		return 0;
-	int retval = -1;	//dummy node doesn't count
-	SortedList_t* head = list;
-	do{
-		retval++;
-		list = list->next;
-	} while (head != list);
-	return retval;
-}
-
-/**
- * variable to enable diagnositc calls to pthread_yield
- */
-extern int opt_yield;
-#define	INSERT_YIELD	0x01	// yield in insert critical section
-#define	DELETE_YIELD	0x02	// yield in delete critical section
-#define	SEARCH_YIELD	0x04	// yield in lookup/length critical section
 
 SortedList_t* list = NULL;
 SortedListElement_t* elements = NULL;
@@ -199,7 +128,29 @@ int main(int argc, char** argv){
 
 	    	case 'y':
 	    		if(optarg != NULL)
-	    			yield = optarg;
+	    			yield= optarg;
+	    		//  012345
+	    			int i = 0;
+	    			int run = 1;
+	    			while(run){
+	    				switch((int)yield[i]){
+	    					case 'i':
+	    						opt_yield |= INSERT_YIELD;
+	    						printf("y=insert\n");
+	    						break;
+	    					case 'd':
+	    						opt_yield |= DELETE_YIELD;
+	    						printf("y=delte\n");
+	    						break;
+	    					case 's':
+	    						opt_yield |= SEARCH_YIELD;
+	    						printf("y=search\n");
+	    						break;
+	    					default:
+	    						run = 0;
+	    				}
+	    				i++;
+	    			}
 	    	break;
 
 	    }
@@ -266,7 +217,7 @@ int main(int argc, char** argv){
 
         //print number of operations
     long num_ops = nThreads * iterations * 3 + 1;
-    printf("%d threads x %d iterations x (add + subtract) = %d\n", nThreads, iterations, num_ops);
+    printf("%d threads x %d iterations x (ins + lookup/del) x (100/2 avg len) = %d operations\n", nThreads, iterations, num_ops);
     if(counter != 0){
     	fprintf(stderr, "ERROR: final count = %d\n", counter);
     }

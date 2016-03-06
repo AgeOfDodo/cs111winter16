@@ -4,18 +4,17 @@
 
 
 CC = gcc
-CFLAGS = -Wformat=0
-LDLIBS = -pthread
+CFLAGS = -Wformat=0 -pthread
 
 all: srt
 
-srt_objects = addtest sltest
+srt_objects = addtest sltest SortedList.h
 srt: $(srt_objects)
 	$(CC) $(CFLAGS) -o $@ $(srt_objects) $(LDLIBS)
 
-# header files
-sltest: .h
-	$(CC) $(CFLAGS) -o sltest.c sltest $(LDLIBS)
+
+sltest: sltest.c SortedList.h
+	$(CC) $(CFLAGS) -o $@ sltest.c $(LDLIBS)
 # check: baseline.ppm $(tests)
 
 
