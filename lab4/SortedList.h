@@ -84,12 +84,14 @@ int SortedList_length(SortedList_t *list);
  * variable to enable diagnositc calls to pthread_yield
  */
 extern int opt_yield;
+
 #define	INSERT_YIELD	0x01	// yield in insert critical section
 #define	DELETE_YIELD	0x02	// yield in delete critical section
 #define	SEARCH_YIELD	0x04	// yield in lookup/length critical section
 
+
 void SortedList_insert(SortedList_t *list, SortedListElement_t *element){
-	// printf("insert\n");
+	printf("insert\n");
 	SortedListElement_t *p = list;
 	SortedListElement_t *n = list->next;
 	while(n != list){
@@ -111,6 +113,7 @@ void SortedList_insert(SortedList_t *list, SortedListElement_t *element){
 
 
 int SortedList_delete( SortedListElement_t *element){
+	printf("delete\n");
 	SortedListElement_t *n = element->next;
 	SortedListElement_t *p = element->prev;
 	if(n->prev != element)
@@ -132,6 +135,7 @@ int SortedList_delete( SortedListElement_t *element){
 
 
 SortedListElement_t *SortedList_lookup(SortedList_t *list, const char *key){
+	printf("lookup\n");
 	if(list == list->next)	
 		return NULL;
 	SortedList_t* head = list;
@@ -148,6 +152,7 @@ SortedListElement_t *SortedList_lookup(SortedList_t *list, const char *key){
 }
 
 int SortedList_length(SortedList_t *list){
+	printf("length\n");
 	if(list == list->next)	
 		return 0;
 	int retval = -1;	//dummy node doesn't count
