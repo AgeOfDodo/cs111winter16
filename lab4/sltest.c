@@ -30,7 +30,24 @@ struct SortedListElement {
 typedef struct SortedListElement SortedList_t;
 typedef struct SortedListElement SortedListElement_t;
 
+
+// for debugging purpose
+void SortedList_display(SortedList_t *list){
+	if(list == list->next){
+		printf("list is empty.\n");
+		return;
+	}
+	SortedList_t* head = list;
+	list = list->next;
+	int i = 0;
+	do{
+		printf("list[%d]= %c\n",i, (list->key)[i]);
+		list = list->next;
+		i++;
+	} while (head != list);
+}
 void SortedList_insert(SortedList_t *list, SortedListElement_t *element){
+	// printf("insert\n");
 	SortedListElement_t *p = list;
 	SortedListElement_t *n = list->next;
 	while(n != list){
@@ -63,9 +80,10 @@ int SortedList_delete( SortedListElement_t *element){
 
 
 SortedListElement_t *SortedList_lookup(SortedList_t *list, const char *key){
-	if(list == NULL)	
+	if(list == list->next)	
 		return NULL;
 	SortedList_t* head = list;
+	list = list->next;
 	do{
 		if(strcmp(list->key, key) == 0)
 			return list;
@@ -75,9 +93,9 @@ SortedListElement_t *SortedList_lookup(SortedList_t *list, const char *key){
 }
 
 int SortedList_length(SortedList_t *list){
-	if(list == NULL)	
+	if(list == list->next)	
 		return 0;
-	int retval = 0;
+	int retval = -1;	//dummy node doesn't count
 	SortedList_t* head = list;
 	do{
 		retval++;
@@ -97,7 +115,7 @@ extern int opt_yield;
 SortedList_t* list = NULL;
 SortedListElement_t* elements = NULL;
 int nElements = 0;
-int iterations = 0;
+int iterations = 1;
 // generate random keys with length 32
 char* gen_random(char* s) {
 	// char s[33];
@@ -114,34 +132,39 @@ char* gen_random(char* s) {
     return s;
 }
 
-void* threadfunc(int index){
+void* threadfunc(void* ind){
+	int index = *((int*) ind);
 	int length;
 	int i;
 	// insert each element 
 	for(i = 0; i < iterations; ++i) {
 		SortedList_insert(list, &elements[index*nElements + i]);
 	}
+
+	// SortedList_display(list);
 	// get length
 	length = SortedList_length(list);
-	
+	printf("length = %d\n", length);
 	// look up/ delete
 	for(i = 0; i < iterations; ++i) {
 		SortedListElement_t* target=  SortedList_lookup(list, elements[index*nElements + i].key);	
-		if(target == NULL)
+		if(target == NULL){
 			printf("should never be here.\b");
 			continue;
+		}
 		SortedList_delete(target);
 	}
 
+	// SortedList_display(list);
+	// length = SortedList_length(list);
 }
 
 int main(int argc, char** argv){
 
   	// c holds return value of getopt_long
 	int c;
-	int thread = 1;
-	int iteration = 1;
-	char yield = NULL;
+	int nThreads = 1;
+	char* yield = NULL;
 	struct timespec startTime, endTime; 
 
 	  // Parse options
@@ -166,12 +189,12 @@ int main(int argc, char** argv){
 	    	//SWITCH STATEMENT
 	    	case 'i':
 	    		if(optarg != NULL)
-	    			iteration = atoi(optarg); 
+	    			iterations = atoi(optarg); 
 	    	break;
 
 	    	case 't':
 	    		if(optarg != NULL)
-	    			thread = atoi(optarg);
+	    			nThreads = atoi(optarg);
 	    	break;
 
 	    	case 'y':
@@ -191,7 +214,7 @@ int main(int argc, char** argv){
 	list->next = list;
 
 	// create and initializes the required number
-	nElements = thread * iteration;
+	nElements = nThreads * iterations;
 	elements = malloc(sizeof(SortedListElement_t) * nElements);
 	int i = 0;
 	for(i = 0 ; i != nElements; i++){
@@ -203,12 +226,12 @@ int main(int argc, char** argv){
 	}
 
     //create threads
-    pthread_t * thread_array = malloc(sizeof(pthread_t)* thread);
+    pthread_t * thread_array = malloc(sizeof(pthread_t)* nThreads);
     
     // start time
     clock_gettime(CLOCK_MONOTONIC , &startTime);
 
-    for(i = 0; i < thread; i++) {
+    for(i = 0; i < nThreads; i++) {
 		int ret = pthread_create(&thread_array[i], NULL, threadfunc, (void *) &i);  //to create thread
 			if (ret != 0) { //error handling
 				fprintf(stderr, "Error creating thread %d\n", i);
@@ -219,7 +242,7 @@ int main(int argc, char** argv){
 	//wait for all to finish
 	//int pthread_join(pthread_t thread, void **retval);
 	//waits for thread to terminate
-	for(i = 0; i < thread; i++) {
+	for(i = 0; i < nThreads; i++) {
 		int ret = pthread_join(thread_array[i], NULL);
 		if (ret != 0) { //error handling
 				fprintf(stderr, "Error joining thread %d\n", i);
@@ -242,8 +265,8 @@ int main(int argc, char** argv){
 // print
 
         //print number of operations
-    long num_ops = thread * iteration * 3 + 1;
-    printf("%d threads x %d iterations x (add + subtract) = %d\n", thread, iteration, num_ops);
+    long num_ops = nThreads * iterations * 3 + 1;
+    printf("%d threads x %d iterations x (add + subtract) = %d\n", nThreads, iterations, num_ops);
     if(counter != 0){
     	fprintf(stderr, "ERROR: final count = %d\n", counter);
     }
