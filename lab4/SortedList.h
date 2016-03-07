@@ -1,3 +1,5 @@
+#include <string.h>
+
 /*
  * SortedList (and SortedListElement)
  *
@@ -91,29 +93,29 @@ extern int opt_yield;
 
 
 void SortedList_insert(SortedList_t *list, SortedListElement_t *element){
-	printf("insert\n");
+	// printf("insert %s\t", element->key);
 	SortedListElement_t *p = list;
 	SortedListElement_t *n = list->next;
 	while(n != list){
 		if(strcmp(element->key, n->key) <= 0)
 			break;
+		n = n->next;
 	}
 	if(opt_yield & INSERT_YIELD){
 		pthread_yield();			
 	}
-	p = n;
-	n = n->next;
+	p = n->prev;
 	element->prev = p;
 	element->next = n;
 	p->next = element;
 	n->prev = element;
-	
+	// printf("p=%s, n=%s\n", p->key, n->key);
 }
 
 
 
 int SortedList_delete( SortedListElement_t *element){
-	printf("delete\n");
+	// printf("delete\n");
 	SortedListElement_t *n = element->next;
 	SortedListElement_t *p = element->prev;
 	if(n->prev != element)
@@ -135,24 +137,24 @@ int SortedList_delete( SortedListElement_t *element){
 
 
 SortedListElement_t *SortedList_lookup(SortedList_t *list, const char *key){
-	printf("lookup\n");
+	// printf("lookup\n");
 	if(list == list->next)	
 		return NULL;
 	SortedList_t* head = list;
-	list = list->next;
-	do{
+	list = list->next;	
+	while (head != list){
 		if(strcmp(list->key, key) == 0)
 			if(opt_yield & SEARCH_YIELD){
 				pthread_yield();			
 			}
 			return list;
 		list = list->next;
-	} while (head != list);
+	} 
 	return NULL;
 }
 
 int SortedList_length(SortedList_t *list){
-	printf("length\n");
+	// printf("length\n");
 	if(list == list->next)	
 		return 0;
 	int retval = -1;	//dummy node doesn't count

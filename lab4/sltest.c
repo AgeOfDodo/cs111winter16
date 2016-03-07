@@ -39,7 +39,7 @@ void SortedList_display(SortedList_t *list){
 	list = list->next;
 	int i = 0;
 	do{
-		printf("list[%d]= %c\n",i, (list->key)[i]);
+		printf("list[%d]= %s\t",i, list->key);
 		list = list->next;
 		i++;
 	} while (head != list);
@@ -51,7 +51,10 @@ SortedList_t* list = NULL;
 SortedListElement_t* elements = NULL;
 int nElements = 0;
 int iterations = 1;
-// generate random keys with length 32
+int nThreads = 1;
+char** keys = NULL;
+int KEYLEN = 10;
+// generate random keys with length KEYLEN
 char* gen_random(char* s) {
 	// char s[33];
     static const char alphanum[] =
@@ -60,46 +63,46 @@ char* gen_random(char* s) {
         "abcdefghijklmnopqrstuvwxyz";
 
     int i;
-    for (i = 0; i < 32; ++i) {
+    for (i = 0; i < KEYLEN; ++i) {
         s[i] = alphanum[rand() % (sizeof(alphanum) - 1)];
     }
-    s[32] = 0;
+    s[KEYLEN] = 0;
     return s;
 }
 
 void* threadfunc(void* ind){
 	int index = *((int*) ind);
+	free(ind);
 	int length;
 	int i;
 	// insert each element 
 	for(i = 0; i < iterations; ++i) {
 		if(MUTEX){
-			pthread_mutex_lock(&mutex);
-			printf("grabbed mutex for insert\n");
-			SortedList_insert(list, &elements[index*nElements + i]);
+			int ret = pthread_mutex_lock(&mutex);
+			SortedList_insert(list, &elements[index*(iterations) + i]);
+			// SortedList_display(list);
+			// printf("releasing mutex for insert, mutex=%d\n", mutex);
 			pthread_mutex_unlock(&mutex);
-			printf("released mutex for insert\n");
 		}
 		else if(SPIN){
-			while(__sync_lock_test_and_set(&spinlock,1)){
-				SortedList_insert(list, &elements[index*nElements + i]);	
-			}
+			while(__sync_lock_test_and_set(&spinlock,1));
+			SortedList_insert(list, &elements[index*(iterations) + i]);
+			// SortedList_display(list);	
 			__sync_lock_release(&spinlock);
 		}else{
-			SortedList_insert(list, &elements[index*nElements + i]);
+			SortedList_insert(list, &elements[index*(iterations) + i]);
 		}		
 	}
 
-	// SortedList_display(list);
 	// get length
 	if(MUTEX){
 		pthread_mutex_lock(&mutex);
+		// SortedList_display(list);	
 		length = SortedList_length(list);
 		pthread_mutex_unlock(&mutex);
 	}else if(SPIN){
-		while(__sync_lock_test_and_set(&spinlock,1)){
-			SortedList_length(list);	
-		}
+		while(__sync_lock_test_and_set(&spinlock,1));
+		SortedList_length(list);	
 		__sync_lock_release(&spinlock);
 	}else{
 		length = SortedList_length(list);
@@ -110,31 +113,31 @@ void* threadfunc(void* ind){
 		SortedListElement_t* target;
 		if(MUTEX){
 			pthread_mutex_lock(&mutex); 	
-			printf("mutex\n");
-			target = SortedList_lookup(list, elements[index*nElements + i].key);
-			SortedList_delete(target);
+			target = SortedList_lookup(list, elements[index*(iterations) + i].key);
 			if(target == NULL){
 				printf("should never be here.\b");
+				pthread_mutex_unlock(&mutex);
 				continue;
 			}
+			SortedList_delete(target);
 			pthread_mutex_unlock(&mutex);
 		}else if(SPIN){
-			while(__sync_lock_test_and_set(&spinlock,1)){
-				target=  SortedList_lookup(list, elements[index*nElements + i].key);
-				SortedList_delete(target);
-				if(target == NULL){
-					printf("should never be here.\b");
-					continue;
-				}
+			while(__sync_lock_test_and_set(&spinlock,1));
+			target =  SortedList_lookup(list, elements[index*iterations + i].key);
+			if(target == NULL){
+				printf("should never be here.\b");
+				__sync_lock_release(&spinlock);
+				continue;
 			}
+			SortedList_delete(target);
 			__sync_lock_release(&spinlock);
 		}else{
-			target=  SortedList_lookup(list, elements[index*nElements + i].key);	
-			SortedList_delete(target);
+			target=  SortedList_lookup(list, elements[index*iterations + i].key);	
 			if(target == NULL){
 				printf("should never be here.\b");
 				continue;
 			}
+			SortedList_delete(target);
 		}
 
 	}
@@ -147,7 +150,6 @@ int main(int argc, char** argv){
 
   	// c holds return value of getopt_long
 	int c;
-	int nThreads = 1;
 	char* yield = NULL;
 	struct timespec startTime, endTime; 
 	  // Parse options
@@ -191,15 +193,15 @@ int main(int argc, char** argv){
 	    				switch((int)yield[i]){
 	    					case 'i':
 	    						opt_yield |= INSERT_YIELD;
-	    						printf("y=insert\n");
+	    						// printf("y=insert\n");
 	    						break;
 	    					case 'd':
 	    						opt_yield |= DELETE_YIELD;
-	    						printf("y=delte\n");
+	    						// printf("y=delte\n");
 	    						break;
 	    					case 's':
 	    						opt_yield |= SEARCH_YIELD;
-	    						printf("y=search\n");
+	    						// printf("y=search\n");
 	    						break;
 	    					default:
 	    						run = 0;
@@ -211,7 +213,7 @@ int main(int argc, char** argv){
 	    		if(optarg != NULL){
     				switch((int)optarg[0]){
     					case 'm':
-    						printf("M\n");	
+    						// printf("M\n");	
 							pthread_mutex_init(&mutex, NULL);
     						MUTEX = 1;
     						break;
@@ -236,11 +238,15 @@ int main(int argc, char** argv){
 	// create and initializes the required number
 	nElements = nThreads * iterations;
 	elements = malloc(sizeof(SortedListElement_t) * nElements);
+	keys= malloc(sizeof(char*) * nElements);
 	int i = 0;
+	for(i = 0; i != nElements; i++){
+		keys[i] = malloc(sizeof(char) * KEYLEN);
+		gen_random(keys[i]);
+	}
+
 	for(i = 0 ; i != nElements; i++){
-		char s[32];
-		gen_random(s);
-		elements[i].key = s;
+		elements[i].key = keys[i];
 		elements[i].next = NULL;
 		elements[i].prev = NULL;
 	}
@@ -251,8 +257,12 @@ int main(int argc, char** argv){
     // start time
     clock_gettime(CLOCK_MONOTONIC , &startTime);
 
+
+
     for(i = 0; i < nThreads; i++) {
-		int ret = pthread_create(&thread_array[i], NULL, threadfunc, (void *) &i);  //to create thread
+    	int *arg = malloc(sizeof(*arg));
+    	*arg = i;
+		int ret = pthread_create(&thread_array[i], NULL, threadfunc, (void *) arg);  //to create thread
 			if (ret != 0) { //error handling
 				fprintf(stderr, "Error creating thread %d\n", i);
 				exit(1);
