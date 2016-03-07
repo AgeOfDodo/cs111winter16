@@ -66,7 +66,7 @@ void addc(long long *pointer, long long value) { //atomic
     do {
         int orig = *pointer;
         sum = orig + value;
-    } while(_sync_val_compare_and_swap(pointer, orig, sum)!= orig);
+    } while(__sync_val_compare_and_swap(pointer, orig, sum)!= orig);
 }
 
 
