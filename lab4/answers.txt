@@ -4,5 +4,15 @@ Q1.3
 Q1.4
 Q2.1
 	time per operation drops as the number of iterations increases becasue the overhead of creating thread are fairly distributed to each operation in our calulation.
+
+	To demostrate conflicts between inserts(--yield=i), we have 16 threads and 150 iterations. To check that the conflicts actually happen between inserts, we print out a "before" line before each call to insert() and an "after" line after. If there are several "before" lines printed out right before seg fault, then we know that the conflict happens between inserts.
+
+	Using the same mothod, we can demostrate conflicts between deletes(yield=d), inserts and lookups (yield=is), and delete and lookup(yield=ds). 	
+
+	When using --sync=m or --sync=s, we don't have seg fault.
+	See graph.pdf for graphs. 
+
 Q2.2
+
+
 Q2.3
