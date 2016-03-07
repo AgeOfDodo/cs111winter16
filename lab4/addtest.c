@@ -51,7 +51,7 @@ void addm(long long *pointer, long long value) { //mutex
 }
 
 void adds(long long *pointer, long long value) { //spin lock
-    __sync_lock_test_and_set(&spinlock,1));
+    __sync_lock_test_and_set(&spinlock,1);
 
     long long sum = *pointer + value;
         if (opt_yield)
@@ -61,7 +61,7 @@ void adds(long long *pointer, long long value) { //spin lock
 }
 
 void addc(long long *pointer, long long value) { //atomic
-    
+    long long sum;
     do {
         int orig = *pointer;
         sum = orig + value;
