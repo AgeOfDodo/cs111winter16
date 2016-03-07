@@ -17,3 +17,8 @@ Using the same mothod, we can demostrate conflicts between deletes(yield=d), ins
 When using --sync=m or --sync=s, we don't have seg fault.
 See graph.pdf for graphs. 
 
+Q 2.2
+
+Compare the two parts
+For --lists implementation, see code in sltest.c, especially in hash(), threadFunc(), 
+
