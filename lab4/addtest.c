@@ -62,6 +62,7 @@ void adds(long long *pointer, long long value) { //spin lock
 
 void addc(long long *pointer, long long value) { //atomic
     long long sum;
+    long long orig;
     do {
         int orig = *pointer;
         sum = orig + value;
