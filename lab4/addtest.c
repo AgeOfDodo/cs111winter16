@@ -35,10 +35,12 @@ int SPIN=0; // yield in lookup/length critical section
 int ATOMIC=0;
 
 void add(long long *pointer, long long value) {
+    printf("in regular add\n");
     long long sum = *pointer + value;
         if (opt_yield)
             pthread_yield();
         *pointer = sum;
+    printf("finished regular add\n"); 
 }
 
 void addm(long long *pointer, long long value) { //mutex
@@ -107,6 +109,7 @@ void* threadfunc(int num_iterations){
 
     }
     else{//regular add
+        printf("calling regular add\n");
         for(i = 0; i < num_iterations; ++i) {
             add(&counter, 1);
         }
