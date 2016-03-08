@@ -35,16 +35,16 @@ int SPIN=0; // yield in lookup/length critical section
 int ATOMIC=0;
 
 void add(long long *pointer, long long value) {
-    printf("in regular add %d\n", value);
+   // printf("in regular add %d\n", value);
     long long sum = *pointer + value;
         if (opt_yield)
             pthread_yield();
         *pointer = sum;
-    printf("finished regular add\n"); 
+   // printf("finished regular add\n"); 
 }
 
 void addm(long long *pointer, long long value) { //mutex
-    printf("in add M\n");
+    //printf("in add M\n");
     pthread_mutex_lock(&mutex);     
     long long sum = *pointer + value;
         if (opt_yield)
@@ -54,7 +54,7 @@ void addm(long long *pointer, long long value) { //mutex
 }
 
 void adds(long long *pointer, long long value) { //spin lock
-    printf("in add S\n");
+   // printf("in add S\n");
     __sync_lock_test_and_set(&spinlock,1);
 
     long long sum = *pointer + value;
@@ -65,7 +65,7 @@ void adds(long long *pointer, long long value) { //spin lock
 }
 
 void addc(long long *pointer, long long value) { //atomic
-    printf("in add A\n");
+   // printf("in add A\n");
     long long sum;
     long long orig;
     do {
@@ -76,8 +76,9 @@ void addc(long long *pointer, long long value) { //atomic
 
 
 
-void* threadfunc(int num_iterations){
+void* threadfunc(int* PTRnum_iterations){
 	int i;
+    int num_iterations = *PTRnum_iterations;
     if(MUTEX) {
     //call addm 
         for(i = 0; i < num_iterations; ++i) {
@@ -112,10 +113,10 @@ void* threadfunc(int num_iterations){
 
     }
     else{//regular add
-        printf("calling regular add\n");
-        printf("num_iterations = %d\n", num_iterations);
+       // printf("calling regular add\n");
+       // printf("num_iterations = %d\n", num_iterations);
         for(i = 0; i < num_iterations; i++) {
-            printf("i = %d\n", i);
+        //    printf("i = %d\n", i);
             add(&counter, 1);
         }
 
@@ -164,7 +165,7 @@ int main(int argc, char **argv) {
     	//SWITCH STATEMENT
     	case 'i':
     		if(optarg != NULL){
-                printf("interation: %s\n", optarg);
+    //            printf("interation: %s\n", optarg);
     			iteration = atoi(optarg); 
             }
     	break;
