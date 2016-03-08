@@ -76,8 +76,9 @@ void addc(long long *pointer, long long value) { //atomic
 
 
 
-void* threadfunc(int num_iterations){
-	int i;
+void* threadfunc(int* PTRnum_iterations){
+	int num_iterations = *PTRnum_iterations;
+    int i;
     if(MUTEX) {
     //call addm 
         for(i = 0; i < num_iterations; ++i) {
@@ -112,7 +113,7 @@ void* threadfunc(int num_iterations){
 
     }
     else{//regular add
-        printf("calling regular add\n");
+        printf("calling regular add, num= %d\n", num_iterations);
         for(i = 0; i < num_iterations; i++) {
             add(&counter, 1);
         }
