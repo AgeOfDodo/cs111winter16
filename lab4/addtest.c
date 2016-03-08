@@ -211,6 +211,7 @@ int main(int argc, char **argv) {
 //waits for thread to terminate
 	printf("About to join threads\n");
 	for(i = 0; i < thread; i++) {
+        printf("Number on joining loop: %d\n", i);
 		int ret = pthread_join(thread_array[i], NULL);
 		if (ret != 0) { //error handling
 				fprintf(stderr, "Error joining thread %d\n", i);
