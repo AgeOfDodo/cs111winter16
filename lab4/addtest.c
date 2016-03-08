@@ -124,8 +124,8 @@ int main(int argc, char **argv) {
 
   // c holds return value of getopt_long
   int c;
-  int thread = 1;
-  int iteration = 1;
+  long long thread = 1;
+  long long iteration = 1;
    struct timespec startTime, endTime; 
 
   // Parse options
