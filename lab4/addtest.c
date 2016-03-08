@@ -26,29 +26,101 @@ profile
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
 long long counter = 0;
-
-
 int opt_yield = 0;
+volatile static int spinlock= 0;
+static pthread_mutex_t mutex;
+
+int MUTEX=0;    // yield in delete critical section
+int SPIN=0; // yield in lookup/length critical section
+int ATOMIC=0;
 
 void add(long long *pointer, long long value) {
+    printf("in regular add %d\n", value);
     long long sum = *pointer + value;
         if (opt_yield)
             pthread_yield();
         *pointer = sum;
+    printf("finished regular add\n"); 
 }
 
+void addm(long long *pointer, long long value) { //mutex
+    printf("in add M\n");
+    pthread_mutex_lock(&mutex);     
+    long long sum = *pointer + value;
+        if (opt_yield)
+            pthread_yield();
+        *pointer = sum;
+    pthread_mutex_unlock(&mutex);     
+}
+
+void adds(long long *pointer, long long value) { //spin lock
+    printf("in add S\n");
+    __sync_lock_test_and_set(&spinlock,1);
+
+    long long sum = *pointer + value;
+        if (opt_yield)
+            pthread_yield();
+        *pointer = sum;
+    __sync_lock_release(&spinlock);
+}
+
+void addc(long long *pointer, long long value) { //atomic
+    printf("in add A\n");
+    long long sum;
+    long long orig;
+    do {
+        int orig = *pointer;
+        sum = orig + value;
+    } while(__sync_val_compare_and_swap(pointer, orig, sum)!= orig);
+}
 
 
 
 void* threadfunc(int num_iterations){
 	int i;
-	for(i = 0; i < num_iterations; ++i) {
-		add(&counter, 1);
-	}
+    if(MUTEX) {
+    //call addm 
+        for(i = 0; i < num_iterations; ++i) {
+            addm(&counter, 1);
+        }
 
-	for(i = 0; i < num_iterations; ++i) {
-		add(&counter, -1);
-	}
+        for(i = 0; i < num_iterations; ++i) {
+            addm(&counter, -1);
+        }   
+    }
+	
+    else if(SPIN){
+         //call add s
+         for(i = 0; i < num_iterations; ++i) {
+            adds(&counter, 1);
+        }
+
+        for(i = 0; i < num_iterations; ++i) {
+             adds(&counter, -1);
+        }
+
+    }
+    else if(ATOMIC){
+        //call addc
+        for(i = 0; i < num_iterations; ++i) {
+            addc(&counter, 1);
+        }
+
+        for(i = 0; i < num_iterations; ++i) {
+             addc(&counter, -1);
+        }
+
+    }
+    else{//regular add
+        printf("calling regular add\n");
+        for(i = 0; i < num_iterations; i++) {
+            add(&counter, 1);
+        }
+
+        for(i = 0; i < num_iterations; i++) {
+             add(&counter, -1);
+        }
+    }
 }
 
 
@@ -58,8 +130,8 @@ int main(int argc, char **argv) {
 
   // c holds return value of getopt_long
   int c;
-  int thread = 1;
-  int iteration = 1;
+  long long thread = 1;
+  long long iteration = 1;
    struct timespec startTime, endTime; 
 
   // Parse options
@@ -73,6 +145,7 @@ int main(int argc, char **argv) {
    		{"iterations",       optional_argument,        0,  'i' },
         {"threads",       optional_argument,        0,  't' },
         {"yield",       optional_argument,        0,  'y' },
+        {"sync",       optional_argument,        0,  'y' },
         {0,0,0,0}
         
     };
@@ -88,8 +161,10 @@ int main(int argc, char **argv) {
     switch (c) {
     	//SWITCH STATEMENT
     	case 'i':
-    		if(optarg != NULL)
+    		if(optarg != NULL){
+                printf("interation: %s\n", optarg);
     			iteration = atoi(optarg); 
+            }
     	break;
 
     	case 't':
@@ -102,7 +177,25 @@ int main(int argc, char **argv) {
     			opt_yield = 1;
     		if (atoi(optarg) != 1)
     			printf("invalid yield argument\n");
-    	break;
+        break;
+
+        case 's':
+            if(optarg != NULL){
+                switch((int)optarg[0]){ 
+                    case 'm':
+                            // printf("M\n");   
+                        pthread_mutex_init(&mutex, NULL);
+                        MUTEX = 1;
+                        break;
+                    case 's':
+                        SPIN = 1;
+                        break;
+                    case 'c':
+                        break;
+                }
+            }
+        break;    
+    	
 
     }
 }
@@ -126,6 +219,7 @@ int main(int argc, char **argv) {
 //waits for thread to terminate
 	printf("About to join threads\n");
 	for(i = 0; i < thread; i++) {
+        printf("Number on joining loop: %d\n", i);
 		int ret = pthread_join(thread_array[i], NULL);
 		if (ret != 0) { //error handling
 				fprintf(stderr, "Error joining thread %d\n", i);
