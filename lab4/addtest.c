@@ -158,8 +158,10 @@ int main(int argc, char **argv) {
     switch (c) {
     	//SWITCH STATEMENT
     	case 'i':
-    		if(optarg != NULL)
+    		if(optarg != NULL){
+                printf("interation: %s\n", optarg);
     			iteration = atoi(optarg); 
+            }
     	break;
 
     	case 't':
