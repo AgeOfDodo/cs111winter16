@@ -113,6 +113,7 @@ void* threadfunc(int num_iterations){
     }
     else{//regular add
         printf("calling regular add\n");
+        printf("num_iterations = %d\n", num_iterations);
         for(i = 0; i < num_iterations; i++) {
             printf("i = %d\n", i);
             add(&counter, 1);
