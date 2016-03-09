@@ -154,7 +154,7 @@ int main(int argc, char **argv) {
     };
 
     // get the next option
-    printf("Parsing options\n");
+   // printf("Parsing options\n");
     c = getopt_long(argc, argv, "", long_options, &option_index);
    
     // break when there are no further options to parse
