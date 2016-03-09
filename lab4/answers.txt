@@ -35,12 +35,33 @@ Q 2.3
 
 Q 3.1
 	(a). Why must the mutex be held when pthread_cond_wait is called?
-
+		One must obtain the lock before calling pthread_cond_wait because pthread_cond_wait() unlock the lock. It is an undefine behavior if we try to unlock an unlocked lock.
 	
 	(b). Why must the mutex be released when the waiting thread is blocked?
+
+		The mutex must be released when the thread is waiting because other threads may need to acquire the mutex to change the desire condition. If thread a holds a mutex and waits for a condition to change while thread b try to acquire the mutex to signal the condition, then deadlock.
+
 	(c). Why must the mutex be reacquired when the calling thread resumes?
+
+		The mutex must be reacquired becuase the whole point of having pthread_cond_wait is that we want the thread to hold the mutex all the time except when a condition is not met and need other threads to change the predicate. 
+
 	(d). Why must this be done inside of pthread_cond_wait? Why can’t the caller simply release the mutex before calling pthread_cond_wait?
+
+		Race condition. If the operation were not atomic, then race condition will occur. For example: Say thread a need the  condition a == 1, and thread b can change a to 0 or 1.
+		time	thread a 		thread b 
+		|		unlock 			
+		|						a = 1
+		V	 					a = 0
+				read condition
+
+		Thead a might miss the condition, and we don't want that.
+
 	(e). Can this be done in a user-mode implementation of pthread_cond_wait? If so, how? If it can only be implemented by a system call, explain why?
+
+		I can only be implemented by a system call because the condition may involove permission to access to kernel.
+		For example, a predicate may involove success on reading a file.
+
+
 
 
 
