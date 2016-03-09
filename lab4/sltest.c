@@ -141,7 +141,7 @@ void* threadfunc(void* ind){
 	}else{
 		length = SortedList_length(list);
 	}
-	printf("length = %d\n", length);
+	// printf("length = %d\n", length);
 	// look up/ delete
 	for(i = 0; i < iterations; ++i) {
 		int j = hash(elements[index*(iterations) + i].key);
@@ -192,7 +192,9 @@ int main(int argc, char** argv){
   	// c holds return value of getopt_long
 	int c;
 	char* yield = NULL;
-	struct timespec startTime, endTime; 
+	struct timespec startTime, endTime;
+	long long time_threads_create = 0;
+	struct timespec starttime_threads_create, endtime_threads_create;
 	  // Parse options
 	while (1) {
 	    int option_index = 0;
@@ -334,9 +336,14 @@ int main(int argc, char** argv){
 
 
     for(i = 0; i < nThreads; i++) {
+    	clock_gettime(CLOCK_MONOTONIC , &starttime_threads_create);
     	int *arg = malloc(sizeof(*arg));
     	*arg = i;
+    	// measure the time it takes to create thread
 		int ret = pthread_create(&thread_array[i], NULL, threadfunc, (void *) arg);  //to create thread
+		clock_gettime(CLOCK_MONOTONIC , &endtime_threads_create);
+		time_threads_create += endtime_threads_create.tv_nsec - starttime_threads_create.tv_nsec;
+		// printf("time_threads = %d\n", time_threads_create);
 			if (ret != 0) { //error handling
 				fprintf(stderr, "Error creating thread %d\n", i);
 				exit(1);
@@ -378,8 +385,8 @@ int main(int argc, char** argv){
 
     long long total_time = endTime.tv_nsec - startTime.tv_nsec;
     printf("elapsed time: %d\n", total_time);
-
-    long long avg = total_time / num_ops;
+    printf("overhead time: %d\n", time_threads_create);
+    long long avg = (total_time - time_threads_create)/ num_ops;
     printf("per operation: %d ns\n", avg);
 
 
