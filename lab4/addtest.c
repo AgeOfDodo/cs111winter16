@@ -203,12 +203,12 @@ int main(int argc, char **argv) {
     }
 }
     //create threads
-	printf("About to create threads\n");
+	//printf("About to create threads\n");
     pthread_t* thread_array = malloc(sizeof(pthread_t) * thread);
-    printf("Just malloced\n");
+    //printf("Just malloced\n");
     int i;
     clock_gettime(CLOCK_MONOTONIC , &startTime);
-    printf("Just got time\n");
+    //printf("Just got time\n");
     for(i = 0; i < thread; i++) {
 		int ret = pthread_create((pthread_t * __restrict__) &thread_array[i], NULL, (void * (*)(void *)) threadfunc, (void *) &iteration);  //to create thread
 			if (ret != 0) { //error handling
@@ -220,9 +220,9 @@ int main(int argc, char **argv) {
 	//wait for all to finish
 	//int pthread_join(pthread_t thread, void **retval);
 //waits for thread to terminate
-	printf("About to join threads\n");
+	//printf("About to join threads\n");
 	for(i = 0; i < thread; i++) {
-        printf("Number on joining loop: %d\n", i);
+      //  printf("Number on joining loop: %d\n", i);
 		int ret = pthread_join(thread_array[i], NULL);
 		if (ret != 0) { //error handling
 				fprintf(stderr, "Error joining thread %d\n", i);
@@ -231,7 +231,7 @@ int main(int argc, char **argv) {
 	//need for loop to wait for all
 	//also do error handling
 	}
-	printf("Succesfully join threads\n");
+	//printf("Succesfully join threads\n");
 
 	//int clock_gettime(clocked_t clk_id , struct timespec* tp) 
  	clock_gettime(CLOCK_MONOTONIC , &endTime);
