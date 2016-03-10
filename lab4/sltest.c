@@ -29,6 +29,16 @@ int SPIN=0;	// yield in lookup/length critical section
 long long counter = 0;
 int opt_yield = 0;
 
+
+// for lists
+SortedList_t* list = NULL;
+SortedListElement_t* elements = NULL;
+int nElements = 0;
+int iterations = 1;
+int nThreads = 1;
+char** keys = NULL;
+int nLists = 1;
+
 // for debugging purpose
 void SortedList_display(SortedList_t *list){
 	if(list == list->next){
@@ -39,35 +49,39 @@ void SortedList_display(SortedList_t *list){
 	list = list->next;
 	int i = 0;
 	do{
-		printf("list[%d]= %s\t",i, list->key);
+		printf("list[%d]= %s\n",i, list->key);
 		list = list->next;
 		i++;
 	} while (head != list);
 }
 
 
-
-SortedList_t* list = NULL;
-SortedListElement_t* elements = NULL;
-int nElements = 0;
-int iterations = 1;
-int nThreads = 1;
-char** keys = NULL;
-int KEYLEN = 10;
 // generate random keys with length KEYLEN
-char* gen_random(char* s) {
-	// char s[33];
+char* gen_random(char* s, int size) {
     static const char alphanum[] =
         "0123456789"
         "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         "abcdefghijklmnopqrstuvwxyz";
 
     int i;
-    for (i = 0; i < KEYLEN; ++i) {
+    for (i = 0; i < size; ++i) {
         s[i] = alphanum[rand() % (sizeof(alphanum) - 1)];
     }
-    s[KEYLEN] = 0;
+    s[size] = 0;
     return s;
+}
+
+// decide which list a key should be inserted.
+// return the index of the list
+int hash(const char* key){
+	int len = strlen(key);
+	// printf("len=%d\n", len);
+	int sum = 0;
+	int i;
+	for(i = 0; i != len; i++){
+		sum += key[i];
+	}
+	return sum % nLists;
 }
 
 void* threadfunc(void* ind){
@@ -75,22 +89,24 @@ void* threadfunc(void* ind){
 	free(ind);
 	int length;
 	int i;
+
 	// insert each element 
 	for(i = 0; i < iterations; ++i) {
+		int j = hash(elements[index*(iterations) + i].key);
+		// printf("j=%d\n", j);
 		if(MUTEX){
 			int ret = pthread_mutex_lock(&mutex);
-			SortedList_insert(list, &elements[index*(iterations) + i]);
-			// SortedList_display(list);
+			SortedList_insert(&list[j], &elements[index*(iterations) + i]);
 			// printf("releasing mutex for insert, mutex=%d\n", mutex);
 			pthread_mutex_unlock(&mutex);
 		}
 		else if(SPIN){
 			while(__sync_lock_test_and_set(&spinlock,1));
-			SortedList_insert(list, &elements[index*(iterations) + i]);
+			SortedList_insert(&list[j], &elements[index*(iterations) + i]);
 			// SortedList_display(list);	
 			__sync_lock_release(&spinlock);
 		}else{
-			SortedList_insert(list, &elements[index*(iterations) + i]);
+			SortedList_insert(&list[j], &elements[index*(iterations) + i]);
 		}		
 	}
 
@@ -102,7 +118,7 @@ void* threadfunc(void* ind){
 		pthread_mutex_unlock(&mutex);
 	}else if(SPIN){
 		while(__sync_lock_test_and_set(&spinlock,1));
-		SortedList_length(list);	
+		length = SortedList_length(list);	
 		__sync_lock_release(&spinlock);
 	}else{
 		length = SortedList_length(list);
@@ -110,10 +126,11 @@ void* threadfunc(void* ind){
 	// printf("length = %d\n", length);
 	// look up/ delete
 	for(i = 0; i < iterations; ++i) {
+		int j = hash(elements[index*(iterations) + i].key);
 		SortedListElement_t* target;
 		if(MUTEX){
 			pthread_mutex_lock(&mutex); 	
-			target = SortedList_lookup(list, elements[index*(iterations) + i].key);
+			target = SortedList_lookup(&list[j], elements[index*(iterations) + i].key);
 			if(target == NULL){
 				printf("should never be here.\b");
 				pthread_mutex_unlock(&mutex);
@@ -123,7 +140,7 @@ void* threadfunc(void* ind){
 			pthread_mutex_unlock(&mutex);
 		}else if(SPIN){
 			while(__sync_lock_test_and_set(&spinlock,1));
-			target =  SortedList_lookup(list, elements[index*iterations + i].key);
+			target =  SortedList_lookup(&list[j], elements[index*iterations + i].key);
 			if(target == NULL){
 				printf("should never be here.\b");
 				__sync_lock_release(&spinlock);
@@ -132,12 +149,17 @@ void* threadfunc(void* ind){
 			SortedList_delete(target);
 			__sync_lock_release(&spinlock);
 		}else{
-			target=  SortedList_lookup(list, elements[index*iterations + i].key);	
+			// printf("lookup\n");
+			// printf("j=%d, key=%s\n", j,elements[index*(iterations) + i].key);
+			target=  SortedList_lookup(&list[j], elements[index*iterations + i].key);	
+			// printf("\tDONE loopup\n");
 			if(target == NULL){
 				printf("should never be here.\b");
 				continue;
 			}
+			// printf("delete\n");
 			SortedList_delete(target);
+			// printf("\tDONE delete\n");
 		}
 
 	}
@@ -147,7 +169,8 @@ void* threadfunc(void* ind){
 }
 
 int main(int argc, char** argv){
-
+	// for loop counter
+	int i = 0;
   	// c holds return value of getopt_long
 	int c;
 	char* yield = NULL;
@@ -161,6 +184,7 @@ int main(int argc, char** argv){
         	{"threads",       optional_argument,        0,  't' },
         	{"yield",       optional_argument,        0,  'y' },
         	{"sync",		optional_argument,		0,	's'},
+        	{"lists", 		optional_argument,		0,	'l'},
         	{0,0,0,0}
    		};
 
@@ -223,26 +247,45 @@ int main(int argc, char** argv){
 	    			}
 	    		}
 	    		break;
+	    	case 'l':
+	    		if(optarg != NULL)
+	    			nLists = atoi(optarg);
+	    			// printf("%d\n",nLists );
+		    	break;
    		}
 
 	}
 
 	// initialize an empty list( with dummy)
- 	SortedList_t l;
- 	list = &l;
+	// list = malloc(sizeof(SortedList_t**))
+	list = malloc(sizeof(SortedList_t)*nLists);
+	for(i = 0; i != nLists; i++){
+		list[i].key = NULL;
+		list[i].prev = &list[i];
+		list[i].next = &list[i];
+	}
+ // 	SortedList_t l;
+ // 	list = &l;
  	
-	list->key = NULL;
-	list->prev = list;
-	list->next = list;
+	// list->key = NULL;
 
 	// create and initializes the required number
 	nElements = nThreads * iterations;
 	elements = malloc(sizeof(SortedListElement_t) * nElements);
+	if(elements == NULL){
+		fprintf(stderr, "Error in allocating space for elements\n");
+	}
 	keys= malloc(sizeof(char*) * nElements);
-	int i = 0;
+	if(elements == NULL){
+		fprintf(stderr, "Error in allocating space for keys\n");
+	}
 	for(i = 0; i != nElements; i++){
-		keys[i] = malloc(sizeof(char) * KEYLEN);
-		gen_random(keys[i]);
+		int size = rand() % 15;
+		keys[i] = malloc(sizeof(char) * size);
+		if(keys[i] == NULL){
+			fprintf(stderr, "Error in allocating space for keys[%d]\n", i);
+		}
+		gen_random(keys[i],size);
 	}
 
 	for(i = 0 ; i != nElements; i++){
@@ -311,7 +354,16 @@ int main(int argc, char** argv){
 
 
   // printf("EXit with %d\n",exit_status );
-  exit(0);
+
+    // free
+    free(elements);
+    for(i = 0; i != nElements; i++){
+    	free(keys[i]);
+    }
+    free(keys);
+    free(thread_array);
+    free(list);
+	exit(0);
 
 
 }

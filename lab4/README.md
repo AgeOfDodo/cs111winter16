@@ -8,9 +8,16 @@ Files descriptions:
 
 * answers.txt 	includes answers for all parts
 * Makefile 		compile source codes for part 1 and part 2 
-* addtest.c
-* sltest.c
+				make all		compile addtest and sltest
+				make addtest	compile addtest
+				make sltest		compile sltest
+				make tarball	generate a tarbal that contains submission files
+				make clean
 
+* addtest.c 	code for part 1
+* sltest.c 		code for part 2
+* SortedList.h 	header file for part 2
+* graphs.pdf 	contain required graphs.
 
-* making graph (part 2)
+(temp graph google doc)
 https://docs.google.com/spreadsheets/d/1rB733D6YNaZ_qnu8vbB2afoMjdT2AHPA3oEvmCw-E5U/edit?usp=sharing
