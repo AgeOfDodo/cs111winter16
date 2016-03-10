@@ -35,16 +35,16 @@ int SPIN=0; // yield in lookup/length critical section
 int ATOMIC=0;
 
 void add(long long *pointer, long long value) {
-    printf("in regular add %d\n", value);
+   // printf("in regular add %d\n", value);
     long long sum = *pointer + value;
         if (opt_yield)
             pthread_yield();
         *pointer = sum;
-    printf("finished regular add\n"); 
+   // printf("finished regular add\n"); 
 }
 
 void addm(long long *pointer, long long value) { //mutex
-    printf("in add M\n");
+    //printf("in add M\n");
     pthread_mutex_lock(&mutex);     
     long long sum = *pointer + value;
         if (opt_yield)
@@ -54,7 +54,7 @@ void addm(long long *pointer, long long value) { //mutex
 }
 
 void adds(long long *pointer, long long value) { //spin lock
-    printf("in add S\n");
+   // printf("in add S\n");
     __sync_lock_test_and_set(&spinlock,1);
 
     long long sum = *pointer + value;
@@ -65,7 +65,7 @@ void adds(long long *pointer, long long value) { //spin lock
 }
 
 void addc(long long *pointer, long long value) { //atomic
-    printf("in add A\n");
+   // printf("in add A\n");
     long long sum;
     long long orig;
     do {
@@ -77,8 +77,8 @@ void addc(long long *pointer, long long value) { //atomic
 
 
 void* threadfunc(int* PTRnum_iterations){
-	int num_iterations = *PTRnum_iterations;
-    int i;
+	int i;
+    int num_iterations = *PTRnum_iterations;
     if(MUTEX) {
     //call addm 
         for(i = 0; i < num_iterations; ++i) {
@@ -113,8 +113,10 @@ void* threadfunc(int* PTRnum_iterations){
 
     }
     else{//regular add
-        printf("calling regular add, num= %d\n", num_iterations);
+       // printf("calling regular add\n");
+       // printf("num_iterations = %d\n", num_iterations);
         for(i = 0; i < num_iterations; i++) {
+        //    printf("i = %d\n", i);
             add(&counter, 1);
         }
 
@@ -152,7 +154,7 @@ int main(int argc, char **argv) {
     };
 
     // get the next option
-    printf("Parsing options\n");
+   // printf("Parsing options\n");
     c = getopt_long(argc, argv, "", long_options, &option_index);
    
     // break when there are no further options to parse
@@ -163,7 +165,7 @@ int main(int argc, char **argv) {
     	//SWITCH STATEMENT
     	case 'i':
     		if(optarg != NULL){
-                printf("interation: %s\n", optarg);
+    //            printf("interation: %s\n", optarg);
     			iteration = atoi(optarg); 
             }
     	break;
@@ -176,8 +178,8 @@ int main(int argc, char **argv) {
     	case 'y':
     		if(optarg != NULL)
     			opt_yield = 1;
-    		if (atoi(optarg) != 1)
-    			printf("invalid yield argument\n");
+    		//if (atoi(optarg) != 1)
+    		//	printf("invalid yield argument\n");
         break;
 
         case 's':
@@ -201,12 +203,12 @@ int main(int argc, char **argv) {
     }
 }
     //create threads
-	printf("About to create threads\n");
+	//printf("About to create threads\n");
     pthread_t* thread_array = malloc(sizeof(pthread_t) * thread);
-    printf("Just malloced\n");
+    //printf("Just malloced\n");
     int i;
     clock_gettime(CLOCK_MONOTONIC , &startTime);
-    printf("Just got time\n");
+    //printf("Just got time\n");
     for(i = 0; i < thread; i++) {
 		int ret = pthread_create((pthread_t * __restrict__) &thread_array[i], NULL, (void * (*)(void *)) threadfunc, (void *) &iteration);  //to create thread
 			if (ret != 0) { //error handling
@@ -218,9 +220,9 @@ int main(int argc, char **argv) {
 	//wait for all to finish
 	//int pthread_join(pthread_t thread, void **retval);
 //waits for thread to terminate
-	printf("About to join threads\n");
+	//printf("About to join threads\n");
 	for(i = 0; i < thread; i++) {
-        printf("Number on joining loop: %d\n", i);
+      //  printf("Number on joining loop: %d\n", i);
 		int ret = pthread_join(thread_array[i], NULL);
 		if (ret != 0) { //error handling
 				fprintf(stderr, "Error joining thread %d\n", i);
@@ -229,7 +231,7 @@ int main(int argc, char **argv) {
 	//need for loop to wait for all
 	//also do error handling
 	}
-	printf("Succesfully join threads\n");
+	//printf("Succesfully join threads\n");
 
 	//int clock_gettime(clocked_t clk_id , struct timespec* tp) 
  	clock_gettime(CLOCK_MONOTONIC , &endTime);
