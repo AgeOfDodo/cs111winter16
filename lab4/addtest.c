@@ -178,8 +178,8 @@ int main(int argc, char **argv) {
     	case 'y':
     		if(optarg != NULL)
     			opt_yield = 1;
-    		if (atoi(optarg) != 1)
-    			printf("invalid yield argument\n");
+    		//if (atoi(optarg) != 1)
+    		//	printf("invalid yield argument\n");
         break;
 
         case 's':
