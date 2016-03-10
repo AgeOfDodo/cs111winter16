@@ -8,7 +8,8 @@ Q 1.2
 if # iterations small, then overhead of creating threads, 
 
 Q 2.1
-time per operation drops as the number of iterations increases becasue the overhead of creating thread are fairly distributed to each operation in our calulation.
+time per operation drops as the number of iterations increases. This is becasue the overhead of creating threads takes up a smaller percentage as it is distributed to each operation in our calulation.
+We can fix this problem by measuring the time it takes to create a thread (gettime before pthread_create and after pthread_create) and subtracting it from our calculation. 
 
 To demostrate conflicts between inserts(--yield=i), we have 16 threads and 150 iterations. To check that the conflicts actually happen between inserts, we print out a "before" line before each call to insert() and an "after" line after. If there are several "before" lines printed out right before seg fault, then we know that the conflict happens between inserts.
 
@@ -18,7 +19,50 @@ When using --sync=m or --sync=s, we don't have seg fault.
 See graph.pdf for graphs. 
 
 Q 2.2
+/*Compare the variation in time per protected operation vs the number of threads in Part 2 and in Part 1. Explain the difference.*/
 
-Compare the two parts
-For --lists implementation, see code in sltest.c, especially in hash(), threadFunc(), 
+
+--lists implementation:
+	We dynamically allocate an array of (sub)lists and two arrays of locks(m and s). 
+	The new length function take argument of the pointer to the lists array and use a loop to add up the length of each sub-list.
+	Before the thread function call length(), it must acquire all the locks. To make sure that a thread don't reach a deadlock when trying to acquire all locks, we declare additional lock such that only the thread that acquire this lock can proceed to acquire other sub-locks. See threadFunc() for implementation.
+
+
+Q 2.3
+
+	From the graph we can see that time per operation is a lot greater when the number of list is less than number of threads. and smaller when the number of list is more than number of threads. This may be because that threads per ????????
+
+
+Q 3.1
+	(a). Why must the mutex be held when pthread_cond_wait is called?
+		One must obtain the lock before calling pthread_cond_wait because pthread_cond_wait() unlock the lock. It is an undefine behavior if we try to unlock an unlocked lock.
+	
+	(b). Why must the mutex be released when the waiting thread is blocked?
+
+		The mutex must be released when the thread is waiting because other threads may need to acquire the mutex to change the desire condition. If thread a holds a mutex and waits for a condition to change while thread b try to acquire the mutex to signal the condition, then deadlock.
+
+	(c). Why must the mutex be reacquired when the calling thread resumes?
+
+		The mutex must be reacquired becuase the whole point of having pthread_cond_wait is that we want the thread to hold the mutex all the time except when a condition is not met and need other threads to change the predicate. 
+
+	(d). Why must this be done inside of pthread_cond_wait? Why can’t the caller simply release the mutex before calling pthread_cond_wait?
+
+		Race condition. If the operation were not atomic, then race condition will occur. For example: Say thread a need the  condition a == 1, and thread b can change a to 0 or 1.
+		time	thread a 		thread b 
+		|		unlock 			
+		|						a = 1
+		V	 					a = 0
+				read condition
+
+		Thead a might miss the condition, and we don't want that.
+
+	(e). Can this be done in a user-mode implementation of pthread_cond_wait? If so, how? If it can only be implemented by a system call, explain why?
+
+		I can only be implemented by a system call because the condition may involove permission to access to kernel.
+		For example, a predicate may involove success on reading a file.
+
+
+
+
+
 

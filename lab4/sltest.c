@@ -19,9 +19,10 @@
 #include <time.h>
 #include "SortedList.h"
 
-static pthread_mutex_t mutex;
-volatile static int spinlock= 0;
-
+static pthread_mutex_t *mutex;
+static int* spinlock;
+static pthread_mutex_t len_mutex;
+static int len_spinlock;
 
 int	MUTEX=0;	// yield in delete critical section
 int SPIN=0;	// yield in lookup/length critical section
@@ -95,16 +96,16 @@ void* threadfunc(void* ind){
 		int j = hash(elements[index*(iterations) + i].key);
 		// printf("j=%d\n", j);
 		if(MUTEX){
-			int ret = pthread_mutex_lock(&mutex);
+			int ret = pthread_mutex_lock(&(mutex[j]));
 			SortedList_insert(&list[j], &elements[index*(iterations) + i]);
 			// printf("releasing mutex for insert, mutex=%d\n", mutex);
-			pthread_mutex_unlock(&mutex);
+			pthread_mutex_unlock(&(mutex[j]));
 		}
 		else if(SPIN){
-			while(__sync_lock_test_and_set(&spinlock,1));
+			while(__sync_lock_test_and_set(&(spinlock[j]),1));
 			SortedList_insert(&list[j], &elements[index*(iterations) + i]);
 			// SortedList_display(list);	
-			__sync_lock_release(&spinlock);
+			__sync_lock_release(&(spinlock[j]));
 		}else{
 			SortedList_insert(&list[j], &elements[index*(iterations) + i]);
 		}		
@@ -112,14 +113,31 @@ void* threadfunc(void* ind){
 
 	// get length
 	if(MUTEX){
-		pthread_mutex_lock(&mutex);
-		// SortedList_display(list);	
+		// lock before entering "locking" process
+		pthread_mutex_lock(&len_mutex);
+		for(i = 0; i != nLists; i++)
+			pthread_mutex_lock(&(mutex[i]));
+		
+		// critical section
 		length = SortedList_length(list);
-		pthread_mutex_unlock(&mutex);
+
+		for(i = 0; i != nLists; i++)
+			pthread_mutex_unlock(&(mutex[i]));
+		
+		pthread_mutex_unlock(&len_mutex);
 	}else if(SPIN){
-		while(__sync_lock_test_and_set(&spinlock,1));
+		// lock before entering "locking" process
+		while(__sync_lock_test_and_set(&len_spinlock,1));
+		
+		for(i = 0; i != nLists; i++)
+			while(__sync_lock_test_and_set(&(spinlock[i]),1));
+		
 		length = SortedList_length(list);	
-		__sync_lock_release(&spinlock);
+
+		for(i = 0; i != nLists; i++)
+			__sync_lock_release(&(spinlock[i]));
+
+		__sync_lock_release(&len_spinlock);
 	}else{
 		length = SortedList_length(list);
 	}
@@ -129,25 +147,25 @@ void* threadfunc(void* ind){
 		int j = hash(elements[index*(iterations) + i].key);
 		SortedListElement_t* target;
 		if(MUTEX){
-			pthread_mutex_lock(&mutex); 	
+			pthread_mutex_lock(&(mutex[j])); 	
 			target = SortedList_lookup(&list[j], elements[index*(iterations) + i].key);
 			if(target == NULL){
 				printf("should never be here.\b");
-				pthread_mutex_unlock(&mutex);
+				pthread_mutex_unlock(&(mutex[j]));
 				continue;
 			}
 			SortedList_delete(target);
-			pthread_mutex_unlock(&mutex);
+			pthread_mutex_unlock(&(mutex[j]));
 		}else if(SPIN){
-			while(__sync_lock_test_and_set(&spinlock,1));
+			while(__sync_lock_test_and_set(&(spinlock[j]),1));
 			target =  SortedList_lookup(&list[j], elements[index*iterations + i].key);
 			if(target == NULL){
 				printf("should never be here.\b");
-				__sync_lock_release(&spinlock);
+				__sync_lock_release(&(spinlock[j]));
 				continue;
 			}
 			SortedList_delete(target);
-			__sync_lock_release(&spinlock);
+			__sync_lock_release(&(spinlock[j]));
 		}else{
 			// printf("lookup\n");
 			// printf("j=%d, key=%s\n", j,elements[index*(iterations) + i].key);
@@ -174,7 +192,9 @@ int main(int argc, char** argv){
   	// c holds return value of getopt_long
 	int c;
 	char* yield = NULL;
-	struct timespec startTime, endTime; 
+	struct timespec startTime, endTime;
+	long long time_threads_create = 0;
+	struct timespec starttime_threads_create, endtime_threads_create;
 	  // Parse options
 	while (1) {
 	    int option_index = 0;
@@ -237,8 +257,6 @@ int main(int argc, char** argv){
 	    		if(optarg != NULL){
     				switch((int)optarg[0]){
     					case 'm':
-    						// printf("M\n");	
-							pthread_mutex_init(&mutex, NULL);
     						MUTEX = 1;
     						break;
     					case 's':
@@ -259,6 +277,21 @@ int main(int argc, char** argv){
 	// initialize an empty list( with dummy)
 	// list = malloc(sizeof(SortedList_t**))
 	list = malloc(sizeof(SortedList_t)*nLists);
+	// initialize mutexes 
+	if(MUTEX){
+    	pthread_mutex_init(&len_mutex, NULL);
+		mutex = malloc(sizeof(pthread_mutex_t) * nLists);
+		for(i = 0; i != nLists; i++)	
+	    	pthread_mutex_init(&(mutex[i]), NULL);
+    }
+    // initialize spinlocks
+    if(SPIN){
+    	len_spinlock = 0;
+    	spinlock = malloc(sizeof(int) * nLists);
+
+		for(i = 0; i != nLists; i++)	
+	    	spinlock[i] = 0;
+    }
 	for(i = 0; i != nLists; i++){
 		list[i].key = NULL;
 		list[i].prev = &list[i];
@@ -303,9 +336,14 @@ int main(int argc, char** argv){
 
 
     for(i = 0; i < nThreads; i++) {
+    	clock_gettime(CLOCK_MONOTONIC , &starttime_threads_create);
     	int *arg = malloc(sizeof(*arg));
     	*arg = i;
+    	// measure the time it takes to create thread
 		int ret = pthread_create(&thread_array[i], NULL, threadfunc, (void *) arg);  //to create thread
+		clock_gettime(CLOCK_MONOTONIC , &endtime_threads_create);
+		time_threads_create += endtime_threads_create.tv_nsec - starttime_threads_create.tv_nsec;
+		// printf("time_threads = %d\n", time_threads_create);
 			if (ret != 0) { //error handling
 				fprintf(stderr, "Error creating thread %d\n", i);
 				exit(1);
@@ -347,8 +385,8 @@ int main(int argc, char** argv){
 
     long long total_time = endTime.tv_nsec - startTime.tv_nsec;
     printf("elapsed time: %d\n", total_time);
-
-    long long avg = total_time / num_ops;
+    printf("overhead time: %d\n", time_threads_create);
+    long long avg = (total_time - time_threads_create)/ num_ops;
     printf("per operation: %d ns\n", avg);
 
 
@@ -363,6 +401,8 @@ int main(int argc, char** argv){
     free(keys);
     free(thread_array);
     free(list);
+    free(spinlock);
+    free(mutex);
 	exit(0);
 
 
