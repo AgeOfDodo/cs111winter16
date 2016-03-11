@@ -214,6 +214,7 @@ int main(int argc, char **argv) {
                         SPIN = 1;
                         break;
                     case 'c':
+                        ATOMIC = 1;
                         break;
                 }
             }
