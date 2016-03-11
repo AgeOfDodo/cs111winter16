@@ -34,67 +34,38 @@ int MUTEX=0;    // yield in delete critical section
 int SPIN=0; // yield in lookup/length critical section
 int ATOMIC=0;
 
-void add(long long *pointer, long long value) {
-   // printf("in regular add %d\n", value);
-    long long sum = *pointer + value;
-        if (opt_yield)
-            pthread_yield();
-        *pointer = sum;
-   // printf("finished regular add\n"); 
+
+
+void* addreg(int* PTRnum_iterations){
+    int num_iterations = *(int *)PTRnum_iterations;
+        for(int i = 0; i < num_iterations; i++) {
+        //    printf("i = %d\n", i);
+            add(&counter, 1);
+        }
+
+        for(i = 0; i < num_iterations; i++) {
+             add(&counter, -1);
+        }
 }
 
-void addm(long long *pointer, long long value) { //mutex
-    //printf("in add M\n");   
-    long long sum = *pointer + value;
-        if (opt_yield)
-            pthread_yield();
-        *pointer = sum;     
-}
-
-void adds(long long *pointer, long long value) { //spin lock
-   // printf("in add S\n");
-  
-
-    long long sum = *pointer + value;
-        if (opt_yield)
-            pthread_yield();
-        *pointer = sum;
-
-}
-
-void addc(long long *pointer, long long value) { //atomic
-   // printf("in add A\n");
-    long long sum;
-    long long orig;
-    do {
-        int orig = *pointer;
-        sum = orig + value;
-    } while(__sync_val_compare_and_swap(pointer, orig, sum)!= orig);
-}
-
-
-
-void* threadfunc(int* PTRnum_iterations){
-	int i;
-    int num_iterations = *PTRnum_iterations;
-    if(MUTEX) {
-    //call addm 
-        for(i = 0; i < num_iterations; ++i) {
+void* addmutex(int* PTRnum_iterations){
+    int num_iterations = *(int *)PTRnum_iterations;
+        for(int i = 0; i < num_iterations; ++i) {
             pthread_mutex_lock(&mutex);  
-            addm(&counter, 1);
+            add(&counter, 1);
             pthread_mutex_unlock(&mutex);  
         }
 
         for(i = 0; i < num_iterations; ++i) {
             pthread_mutex_lock(&mutex);  
-            addm(&counter, -1);
+            add(&counter, -1);
             pthread_mutex_unlock(&mutex);  
-        }   
-    }
-	
-    else if(SPIN){
-         //call add s
-         for(i = 0; i < num_iterations; ++i) {
+        }  
+}
+
+void* addspin(int* PTRnum_iterations){
+    int num_iterations = *(int *)PTRnum_iterations;
+        for(int i = 0; i < num_iterations; ++i) {
             __sync_lock_test_and_set(&spinlock,1);
             adds(&counter, 1);
               __sync_lock_release(&spinlock);
@@ -105,32 +76,32 @@ void* threadfunc(int* PTRnum_iterations){
              adds(&counter, -1);
                __sync_lock_release(&spinlock);
         }
-
-    }
-    else if(ATOMIC){
-        //call addc
-        for(i = 0; i < num_iterations; ++i) {
-            addc(&counter, 1);
-        }
-
-        for(i = 0; i < num_iterations; ++i) {
-             addc(&counter, -1);
-        }
-
-    }
-    else{//regular add
-       // printf("calling regular add\n");
-       // printf("num_iterations = %d\n", num_iterations);
-        for(i = 0; i < num_iterations; i++) {
-        //    printf("i = %d\n", i);
-            add(&counter, 1);
-        }
-
-        for(i = 0; i < num_iterations; i++) {
-             add(&counter, -1);
-        }
-    }
 }
+
+void* addswap(int* PTRnum_iterations){
+    int num_iterations = *(int *)PTRnum_iterations;
+    long long * ptr = &counter;
+    long long sum;
+    int orig;
+    for (int i = 0; i < n; ++i) {
+        do {
+            orig = *ptr;
+            sum = orig + 1;
+      if (opt_yield) 
+        pthread_yield();
+        } while(__sync_val_compare_and_swap(ptr, orig, sum)!= orig);
+    }
+    for (int i = 0; i < n; ++i) {
+        do {
+            orig = *ptr;
+            sum = orig - 1;
+      if (opt_yield) 
+        pthread_yield();
+        } while(__sync_val_compare_and_swap(ptr, orig, sum)!= orig);
+    }
+
+}
+
 
 
 
@@ -142,7 +113,7 @@ int main(int argc, char **argv) {
   long long thread = 1;
   long long iteration = 1;
    struct timespec startTime, endTime; 
-
+   char sync = 'n';
   // Parse options
   while (1) {
 
@@ -190,19 +161,24 @@ int main(int argc, char **argv) {
 
         case 's':
             if(optarg != NULL){
+                sync = optarg[0];
+                /*
                 switch((int)optarg[0]){ 
                     case 'm':
                             // printf("M\n");   
                         pthread_mutex_init(&mutex, NULL);
-                        MUTEX = 1;
+                       // MUTEX = 1;
                         break;
                     case 's':
-                        SPIN = 1;
+                        //SPIN = 1;
                         break;
                     case 'c':
+                       // ATOMIC = 1;
                         break;
-                }
+                }*/
             }
+            else
+            //sync = optarg[0];
         break;    
     	
 
@@ -214,13 +190,52 @@ int main(int argc, char **argv) {
     //printf("Just malloced\n");
     int i;
     clock_gettime(CLOCK_MONOTONIC , &startTime);
+    if(thread < 1){
+        prinft(stderr, "ERROR: argument to --threads must be positive\n");
+        exit(1);
+    }
+      if(iteration < 1){
+        prinft(stderr, "ERROR: argument to --iterations must be positive\n");
+        exit(1);
+    }
+
     //printf("Just got time\n");
     for(i = 0; i < thread; i++) {
-		int ret = pthread_create((pthread_t * __restrict__) &thread_array[i], NULL, (void * (*)(void *)) threadfunc, (void *) &iteration);  //to create thread
-			if (ret != 0) { //error handling
-				fprintf(stderr, "Error creating thread %d\n", i);
-				exit(1);
-			}
+        int ret
+        switch(sync){
+            case 'n': //none
+            ret = pthread_create((pthread_t * __restrict__) &thread_array[i], NULL, (void * (*)(void *)) addreg, (void *) &iteration); 
+            if (ret != 0) { //error handling
+                fprintf(stderr, "Error creating thread %d with error code \n", i, ret);
+                exit(1);
+            }
+            break;
+            case 's': //spin
+            ret = pthread_create((pthread_t * __restrict__) &thread_array[i], NULL, (void * (*)(void *)) addspin, (void *) &iteration); 
+            if (ret != 0) { //error handling
+                fprintf(stderr, "Error creating thread %d with error code \n", i, ret);
+                exit(1);
+            }
+            break;
+            case 'c': //compare and swap
+            ret = pthread_create((pthread_t * __restrict__) &thread_array[i], NULL, (void * (*)(void *)) addswap, (void *) &iteration); 
+            if (ret != 0) { //error handling
+                fprintf(stderr, "Error creating thread %d with error code \n", i, ret);
+                exit(1);
+            }
+            break;
+            case 'm': //mutex
+            ret = pthread_create((pthread_t * __restrict__) &thread_array[i], NULL, (void * (*)(void *)) addmutex, (void *) &iteration); 
+            if (ret != 0) { //error handling
+                fprintf(stderr, "Error creating thread %d with error code \n", i, ret);
+                exit(1);
+            }
+
+            break;
+        }
+
+
+
 	}
 
 	//wait for all to finish
