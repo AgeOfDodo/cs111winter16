@@ -200,11 +200,11 @@ int main(int argc, char **argv) {
     int i;
     clock_gettime(CLOCK_MONOTONIC , &startTime);
     if(thread < 1){
-        prinft(stderr, "ERROR: argument to --threads must be positive\n");
+        printf(stderr, "ERROR: argument to --threads must be positive\n");
         exit(1);
     }
       if(iteration < 1){
-        prinft(stderr, "ERROR: argument to --iterations must be positive\n");
+        printf(stderr, "ERROR: argument to --iterations must be positive\n");
         exit(1);
     }
 
