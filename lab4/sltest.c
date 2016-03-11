@@ -377,7 +377,7 @@ int main(int argc, char** argv){
 
         //print number of operations
     long num_ops = nThreads * iterations * 3 + 1;
-    printf("%d threads x %d iterations x (ins + lookup/del) x (100/2 avg len) = %d operations\n", nThreads, iterations, num_ops);
+    printf("%d threads x %d iterations x (ins + lookup/del) = %d operations\n", nThreads, iterations, num_ops);
     if(counter != 0){
     	fprintf(stderr, "ERROR: final count = %d\n", counter);
     }
