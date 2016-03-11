@@ -37,8 +37,9 @@ int ATOMIC=0;
 
 
 void* addreg(int* PTRnum_iterations){
+    int i;
     int num_iterations = *(int *)PTRnum_iterations;
-        for(int i = 0; i < num_iterations; i++) {
+        for(i = 0; i < num_iterations; i++) {
         //    printf("i = %d\n", i);
             add(&counter, 1);
         }
@@ -49,8 +50,9 @@ void* addreg(int* PTRnum_iterations){
 }
 
 void* addmutex(int* PTRnum_iterations){
+    int i;
     int num_iterations = *(int *)PTRnum_iterations;
-        for(int i = 0; i < num_iterations; ++i) {
+        for(i = 0; i < num_iterations; ++i) {
             pthread_mutex_lock(&mutex);  
             add(&counter, 1);
             pthread_mutex_unlock(&mutex);  
@@ -64,8 +66,9 @@ void* addmutex(int* PTRnum_iterations){
 }
 
 void* addspin(int* PTRnum_iterations){
+    int i;
     int num_iterations = *(int *)PTRnum_iterations;
-        for(int i = 0; i < num_iterations; ++i) {
+        for(i = 0; i < num_iterations; ++i) {
             __sync_lock_test_and_set(&spinlock,1);
             adds(&counter, 1);
               __sync_lock_release(&spinlock);
@@ -79,11 +82,12 @@ void* addspin(int* PTRnum_iterations){
 }
 
 void* addswap(int* PTRnum_iterations){
+    int i;
     int num_iterations = *(int *)PTRnum_iterations;
     long long * ptr = &counter;
     long long sum;
     int orig;
-    for (int i = 0; i < n; ++i) {
+    for (i = 0; i < num_iterations; ++i) {
         do {
             orig = *ptr;
             sum = orig + 1;
@@ -91,7 +95,7 @@ void* addswap(int* PTRnum_iterations){
         pthread_yield();
         } while(__sync_val_compare_and_swap(ptr, orig, sum)!= orig);
     }
-    for (int i = 0; i < n; ++i) {
+    for (i = 0; i < num_iterations; ++i) {
         do {
             orig = *ptr;
             sum = orig - 1;
@@ -201,7 +205,7 @@ int main(int argc, char **argv) {
 
     //printf("Just got time\n");
     for(i = 0; i < thread; i++) {
-        int ret
+        int ret;
         switch(sync){
             case 'n': //none
             ret = pthread_create((pthread_t * __restrict__) &thread_array[i], NULL, (void * (*)(void *)) addreg, (void *) &iteration); 
