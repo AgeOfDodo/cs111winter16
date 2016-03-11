@@ -171,6 +171,7 @@ int main(int argc, char **argv) {
         case 's':
             if(optarg != NULL){
                 sync = optarg[0];
+                printf("sync = %c\n", sync);
                 /*
                 switch((int)optarg[0]){ 
                     case 'm':
@@ -234,6 +235,7 @@ int main(int argc, char **argv) {
             }
             break;
             case 'm': //mutex
+            printf("GONNA CALL ADD MUTEX\n");
             ret = pthread_create((pthread_t * __restrict__) &thread_array[i], NULL, (void * (*)(void *)) addmutex, (void *) &iteration); 
             if (ret != 0) { //error handling
                 fprintf(stderr, "Error creating thread %d with error code \n", i, ret);
