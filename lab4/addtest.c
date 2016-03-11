@@ -96,13 +96,13 @@ void* threadfunc(int* PTRnum_iterations){
     else if(SPIN){
          //call add s
          for(i = 0; i < num_iterations; ++i) {
-            __sync_lock_test_and_set(&spinlock,1);
+            while(__sync_lock_test_and_set(&spinlock,1));
             adds(&counter, 1);
               __sync_lock_release(&spinlock);
         }
 
         for(i = 0; i < num_iterations; ++i) {
-            __sync_lock_test_and_set(&spinlock,1);
+            while(__sync_lock_test_and_set(&spinlock,1));
              adds(&counter, -1);
                __sync_lock_release(&spinlock);
         }
