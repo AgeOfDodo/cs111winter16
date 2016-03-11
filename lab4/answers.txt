@@ -1,11 +1,44 @@
 
 
 Q 1.1 why does it take this many threads or iterations?
-if number of threads/iterations is small, “its not possiblet to say the result is wrong” 
-no conflicts of calling add() if few enough threads? so smaller iterations rarely fail?
+1. Once I started running the program with ~50 threads and ~150 iterations, the count would be incorrect 
+	roughly half the time. Once I changed it to about ~60 threads and roughly ~500 iterations, the count
+	would rarely return correct.
+	It takes this many threads and iterations because with a smaller number of threads, there are very
+	few conflicts of calling add() at the same time. However, as the number of iterations increases, the chance 
+	that more than one thread collides with another thread's attempt to add() increases greatly. 
+2. A significantly smaller number of iterations so seldom fails because there is a greatly decreased
+	chance of threads colliding in their call to add(). 
+
 
 Q 1.2
-if # iterations small, then overhead of creating threads, 
+1. A lot of the time picked up by the clock_gettime calls is the overhead needed to create the threads.
+	as more threads are added, the overhead value stays roughly the same, and so the average drops
+	considerably.
+2. In order to get the "correct" time, we could add a second pair of clock_gettime function calls and 
+	subtract this value from the current value for time we're receiving, as this would get rid of the overhead
+	that calling pthread_create causes. 
+3. --yield runs are so much slower because for every iteration the program must yield, thus giving up 
+	the CPU and allowing context switches to occur. This added time as the iterations increase is
+	likely do to a greatly growing number of context switches.
+	---------------------
+	/
+	/ Sunnie might disagree on 4
+	/
+	---------------------
+4. In a similar way to #2, we can still get the correct time even if using --yield. We could put a pair
+	of clock_gettime function calls around the yield() call and subtract that from the total time. This
+	would take out time cause by any context switch or time taken by another thread running. 
+
+Q 1.3
+1. All options perform similarly for low numbers because there aren't many collisions and therefore
+	isnt that much waiting time for any blocked thread, and thus all methods perform similarly.
+2. As the number of threads increase, the more threads exist that need to be blocked. This means
+	that threads begin to spend time waiting and thus the average time per operation rises.
+3. Spin-locks do busy waiting, and therefore cost a lot of time. 
+
+/////maybe elaborate ^^
+
 
 Q 2.1
 time per operation drops as the number of iterations increases. This is becasue the overhead of creating threads takes up a smaller percentage as it is distributed to each operation in our calulation.
@@ -60,9 +93,3 @@ Q 3.1
 
 		I can only be implemented by a system call because the condition may involove permission to access to kernel.
 		For example, a predicate may involove success on reading a file.
-
-
-
-
-
-

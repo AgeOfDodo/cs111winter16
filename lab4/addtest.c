@@ -1,3 +1,4 @@
+
 /* CS111 Winter 2016 Lab1a
 See README for further information
 TODO:
@@ -25,7 +26,7 @@ profile
 
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
-long long counter = 0;
+static long long counter = 0;
 int opt_yield = 0;
 volatile static int spinlock= 0;
 static pthread_mutex_t mutex;
@@ -44,24 +45,22 @@ void add(long long *pointer, long long value) {
 }
 
 void addm(long long *pointer, long long value) { //mutex
-    //printf("in add M\n");
-    pthread_mutex_lock(&mutex);     
+    //printf("in add M\n");   
     long long sum = *pointer + value;
         if (opt_yield)
             pthread_yield();
-        *pointer = sum;
-    pthread_mutex_unlock(&mutex);     
+        *pointer = sum;     
 }
 
 void adds(long long *pointer, long long value) { //spin lock
    // printf("in add S\n");
-    __sync_lock_test_and_set(&spinlock,1);
+  
 
     long long sum = *pointer + value;
         if (opt_yield)
             pthread_yield();
         *pointer = sum;
-    __sync_lock_release(&spinlock);
+
 }
 
 void addc(long long *pointer, long long value) { //atomic
@@ -77,39 +76,60 @@ void addc(long long *pointer, long long value) { //atomic
 
 
 void* threadfunc(int* PTRnum_iterations){
-	int i;
+    int i;
     int num_iterations = *PTRnum_iterations;
     if(MUTEX) {
     //call addm 
         for(i = 0; i < num_iterations; ++i) {
+            pthread_mutex_lock(&mutex);  
             addm(&counter, 1);
+            pthread_mutex_unlock(&mutex);  
         }
 
         for(i = 0; i < num_iterations; ++i) {
+            pthread_mutex_lock(&mutex);  
             addm(&counter, -1);
+            pthread_mutex_unlock(&mutex);  
         }   
     }
-	
+    
     else if(SPIN){
          //call add s
          for(i = 0; i < num_iterations; ++i) {
+            while(__sync_lock_test_and_set(&spinlock,1));
             adds(&counter, 1);
+              __sync_lock_release(&spinlock);
         }
 
         for(i = 0; i < num_iterations; ++i) {
+            while(__sync_lock_test_and_set(&spinlock,1));
              adds(&counter, -1);
+               __sync_lock_release(&spinlock);
         }
 
     }
     else if(ATOMIC){
         //call addc
-        for(i = 0; i < num_iterations; ++i) {
-            addc(&counter, 1);
-        }
+     int orig;
+     long long *pointer = &counter;
+     long long sum;
+     for(i = 0; i < num_iterations; i++){
+        do{
+            orig = *pointer;
+            sum = orig +1;
 
-        for(i = 0; i < num_iterations; ++i) {
-             addc(&counter, -1);
-        }
+            if(opt_yield)
+                pthread_yield();
+        } while(__sync_val_compare_and_swap(pointer, orig, sum)!= orig);
+     }
+     for(i = 0; i < num_iterations; i++){
+        do{
+            orig = *pointer;
+            sum = orig -1;
+            if(opt_yield)
+                pthread_yield();
+        } while(__sync_val_compare_and_swap(pointer, orig, sum)!= orig);
+     }
 
     }
     else{//regular add
@@ -145,10 +165,10 @@ int main(int argc, char **argv) {
     int option_index = 0;
     static struct option long_options[] = {
 // SUBCOMMAND
-   		{"iterations",       optional_argument,        0,  'i' },
+        {"iterations",       optional_argument,        0,  'i' },
         {"threads",       optional_argument,        0,  't' },
         {"yield",       optional_argument,        0,  'y' },
-        {"sync",       optional_argument,        0,  'y' },
+        {"sync",       optional_argument,        0,  's' },
         {0,0,0,0}
         
     };
@@ -162,24 +182,24 @@ int main(int argc, char **argv) {
       break;
 
     switch (c) {
-    	//SWITCH STATEMENT
-    	case 'i':
-    		if(optarg != NULL){
+        //SWITCH STATEMENT
+        case 'i':
+            if(optarg != NULL){
     //            printf("interation: %s\n", optarg);
-    			iteration = atoi(optarg); 
+                iteration = atoi(optarg); 
             }
-    	break;
+        break;
 
-    	case 't':
-    		if(optarg != NULL)
-    			thread = atoi(optarg);
-    	break;
+        case 't':
+            if(optarg != NULL)
+                thread = atoi(optarg);
+        break;
 
-    	case 'y':
-    		if(optarg != NULL)
-    			opt_yield = 1;
-    		//if (atoi(optarg) != 1)
-    		//	printf("invalid yield argument\n");
+        case 'y':
+            if(optarg != NULL)
+                opt_yield = 1;
+            //if (atoi(optarg) != 1)
+            //  printf("invalid yield argument\n");
         break;
 
         case 's':
@@ -194,47 +214,48 @@ int main(int argc, char **argv) {
                         SPIN = 1;
                         break;
                     case 'c':
+                        ATOMIC = 1;
                         break;
                 }
             }
         break;    
-    	
+        
 
     }
 }
     //create threads
-	//printf("About to create threads\n");
+    //printf("About to create threads\n");
     pthread_t* thread_array = malloc(sizeof(pthread_t) * thread);
     //printf("Just malloced\n");
     int i;
     clock_gettime(CLOCK_MONOTONIC , &startTime);
     //printf("Just got time\n");
     for(i = 0; i < thread; i++) {
-		int ret = pthread_create((pthread_t * __restrict__) &thread_array[i], NULL, (void * (*)(void *)) threadfunc, (void *) &iteration);  //to create thread
-			if (ret != 0) { //error handling
-				fprintf(stderr, "Error creating thread %d\n", i);
-				exit(1);
-			}
-	}
+        int ret = pthread_create((pthread_t * __restrict__) &thread_array[i], NULL, (void * (*)(void *)) threadfunc, (void *) &iteration);  //to create thread
+            if (ret != 0) { //error handling
+                fprintf(stderr, "Error creating thread %d\n", i);
+                exit(1);
+            }
+    }
 
-	//wait for all to finish
-	//int pthread_join(pthread_t thread, void **retval);
+    //wait for all to finish
+    //int pthread_join(pthread_t thread, void **retval);
 //waits for thread to terminate
-	//printf("About to join threads\n");
-	for(i = 0; i < thread; i++) {
+    //printf("About to join threads\n");
+    for(i = 0; i < thread; i++) {
       //  printf("Number on joining loop: %d\n", i);
-		int ret = pthread_join(thread_array[i], NULL);
-		if (ret != 0) { //error handling
-				fprintf(stderr, "Error joining thread %d\n", i);
-				exit(1);
-			}
-	//need for loop to wait for all
-	//also do error handling
-	}
-	//printf("Succesfully join threads\n");
+        int ret = pthread_join(thread_array[i], NULL);
+        if (ret != 0) { //error handling
+                fprintf(stderr, "Error joining thread %d\n", i);
+                exit(1);
+            }
+    //need for loop to wait for all
+    //also do error handling
+    }
+    //printf("Succesfully join threads\n");
 
-	//int clock_gettime(clocked_t clk_id , struct timespec* tp) 
- 	clock_gettime(CLOCK_MONOTONIC , &endTime);
+    //int clock_gettime(clocked_t clk_id , struct timespec* tp) 
+    clock_gettime(CLOCK_MONOTONIC , &endTime);
     /*// straight from the spec
 void add(long long *pointer, long long value) {
     long long sum = *pointer + value;
@@ -245,7 +266,7 @@ void add(long long *pointer, long long value) {
     long long num_ops = thread * iteration * 2;
     printf("%d threads x %d iterations x (add + subtract) = %d\n", thread, iteration, num_ops);
     if(counter != 0){
-    	fprintf(stderr, "ERROR: final count = %d\n", counter);
+        fprintf(stderr, "ERROR: final count = %d\n", counter);
     }
 
 
