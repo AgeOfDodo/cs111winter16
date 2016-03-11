@@ -25,7 +25,7 @@ profile
 
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
-long long counter = 0;
+static long long counter = 0;
 int opt_yield = 0;
 volatile static int spinlock= 0;
 static pthread_mutex_t mutex;
@@ -44,24 +44,22 @@ void add(long long *pointer, long long value) {
 }
 
 void addm(long long *pointer, long long value) { //mutex
-    //printf("in add M\n");
-    pthread_mutex_lock(&mutex);     
+    //printf("in add M\n");   
     long long sum = *pointer + value;
         if (opt_yield)
             pthread_yield();
-        *pointer = sum;
-    pthread_mutex_unlock(&mutex);     
+        *pointer = sum;     
 }
 
 void adds(long long *pointer, long long value) { //spin lock
    // printf("in add S\n");
-    __sync_lock_test_and_set(&spinlock,1);
+  
 
     long long sum = *pointer + value;
         if (opt_yield)
             pthread_yield();
         *pointer = sum;
-    __sync_lock_release(&spinlock);
+
 }
 
 void addc(long long *pointer, long long value) { //atomic
@@ -82,22 +80,30 @@ void* threadfunc(int* PTRnum_iterations){
     if(MUTEX) {
     //call addm 
         for(i = 0; i < num_iterations; ++i) {
+            pthread_mutex_lock(&mutex);  
             addm(&counter, 1);
+            pthread_mutex_unlock(&mutex);  
         }
 
         for(i = 0; i < num_iterations; ++i) {
+            pthread_mutex_lock(&mutex);  
             addm(&counter, -1);
+            pthread_mutex_unlock(&mutex);  
         }   
     }
 	
     else if(SPIN){
          //call add s
          for(i = 0; i < num_iterations; ++i) {
+            __sync_lock_test_and_set(&spinlock,1);
             adds(&counter, 1);
+              __sync_lock_release(&spinlock);
         }
 
         for(i = 0; i < num_iterations; ++i) {
+            __sync_lock_test_and_set(&spinlock,1);
              adds(&counter, -1);
+               __sync_lock_release(&spinlock);
         }
 
     }
