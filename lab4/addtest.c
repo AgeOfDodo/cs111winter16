@@ -110,13 +110,26 @@ void* threadfunc(int* PTRnum_iterations){
     }
     else if(ATOMIC){
         //call addc
-        for(i = 0; i < num_iterations; ++i) {
-            addc(&counter, 1);
-        }
+     int orig;
+     long long *pointer = &counter;
+     long long sum;
+     for(i = 0; i < num_iterations; i++){
+        do{
+            orig = *pointer;
+            sum = orig +1;
 
-        for(i = 0; i < num_iterations; ++i) {
-             addc(&counter, -1);
-        }
+            if(opt_yield)
+                pthread_yield();
+        } while(__sync_val_compare_and_swap(pointer, orig, sum)!= orig);
+     }
+     for(i = 0; i < num_iterations; i++){
+        do{
+            orig = *pointer;
+            sum = orig -1;
+            if(opt_yield)
+                pthread_yield();
+        } while(__sync_val_compare_and_swap(pointer, orig, sum)!= orig);
+     }
 
     }
     else{//regular add
