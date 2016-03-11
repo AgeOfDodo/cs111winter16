@@ -134,7 +134,7 @@ int main(int argc, char **argv) {
    		{"iterations",       optional_argument,        0,  'i' },
         {"threads",       optional_argument,        0,  't' },
         {"yield",       optional_argument,        0,  'y' },
-        {"sync",       optional_argument,        0,  'y' },
+        {"sync",       optional_argument,        0,  's' },
         {0,0,0,0}
         
     };
