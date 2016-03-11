@@ -10,7 +10,7 @@ submission_files = Makefile addtest.c sltest.c SortedList.h README.md answers.tx
 
 all: sltest addtest
 
-sltest: sltest.c SortedList.h
+sltest: sltest.c SortedList.h 
 	$(CC) $(CFLAGS) -o $@ sltest.c $(LDLIBS)
 
 addtest: addtest.c 

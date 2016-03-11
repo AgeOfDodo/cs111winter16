@@ -63,6 +63,9 @@ Q 2.2
 
 Q 2.3
 
+	Explain the the change in performance of the synchronized methods as a function of the number of threads per list.
+	Explain why threads per list is a more interesting number than threads (for this particular measurement).
+
 	From the graph we can see that time per operation is a lot greater when the number of list is less than number of threads. and smaller when the number of list is more than number of threads. This may be because that threads per ????????
 
 

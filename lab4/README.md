@@ -21,3 +21,4 @@ Files descriptions:
 
 (temp graph google doc)
 https://docs.google.com/spreadsheets/d/1rB733D6YNaZ_qnu8vbB2afoMjdT2AHPA3oEvmCw-E5U/edit?usp=sharing
+https://docs.google.com/document/d/1tsuc-LENAPSN1qUewhggxQkSCYTuhcbLI38Hnao6kSM/edit

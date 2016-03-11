@@ -375,10 +375,13 @@ int main(int argc, char** argv){
 
 // print
 
-        //print number of operations
-        // 		insert and lookup       length
-    long num_ops = nThreads * iterations * 2 + nThreads;
-    printf("%d threads x %d iterations x (ins + lookup/del) = %d operations\n", nThreads, iterations, num_ops);
+
+    // get avarage length of a sublist.
+
+    // int avgLen = nElements / nLists;
+    long num_ops = nThreads * iterations * 2 ;
+
+    printf("%d threads x %d iterations x (#ins + #lookup/del)  = %d operations\n", nThreads, iterations,  num_ops);
     if(counter != 0){
     	fprintf(stderr, "ERROR: final count = %d\n", counter);
     }

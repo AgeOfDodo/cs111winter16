@@ -93,6 +93,7 @@ extern int nLists;
 #define	SEARCH_YIELD	0x04	// yield in lookup/length critical section
 
 
+
 void SortedList_insert(SortedList_t *list, SortedListElement_t *element){
 	// printf("insert %s\t", element->key);
 	SortedListElement_t *p = list;
