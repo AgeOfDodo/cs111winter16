@@ -34,7 +34,12 @@ int MUTEX=0;    // yield in delete critical section
 int SPIN=0; // yield in lookup/length critical section
 int ATOMIC=0;
 
-
+void add(long long *pointer, long long value) {
+        long long sum = *pointer + value;
+        if (opt_yield) 
+            pthread_yield();
+        *pointer = sum;
+}
 
 void* addreg(int* PTRnum_iterations){
     int i;
@@ -70,13 +75,13 @@ void* addspin(int* PTRnum_iterations){
     int num_iterations = *(int *)PTRnum_iterations;
         for(i = 0; i < num_iterations; ++i) {
             __sync_lock_test_and_set(&spinlock,1);
-            adds(&counter, 1);
+            add(&counter, 1);
               __sync_lock_release(&spinlock);
         }
 
         for(i = 0; i < num_iterations; ++i) {
             __sync_lock_test_and_set(&spinlock,1);
-             adds(&counter, -1);
+             add(&counter, -1);
                __sync_lock_release(&spinlock);
         }
 }
