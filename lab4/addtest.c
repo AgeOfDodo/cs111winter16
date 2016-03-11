@@ -116,7 +116,7 @@ void* addswap(int* PTRnum_iterations){
 
 int main(int argc, char **argv) {
 
-
+   pthread_mutex_init(&mutex, NULL);
   // c holds return value of getopt_long
   int c;
   long long thread = 1;
