@@ -16,7 +16,7 @@ Files descriptions:
 
 * addtest.c 	code for part 1
 * sltest.c 		code for part 2
-* SortedList.h 	header file for part 2
+* SortedList.h 	header file for part 2. 
 * graphs.pdf 	contain required graphs.
 
 (temp graph google doc)

@@ -37,7 +37,6 @@ Q 1.3
 	that threads begin to spend time waiting and thus the average time per operation rises.
 3. Spin-locks do busy waiting, and therefore cost a lot of time. 
 
-/////maybe elaborate ^^
 
 
 Q 2.1
@@ -53,7 +52,7 @@ See graph.pdf for graphs.
 
 Q 2.2
 /*Compare the variation in time per protected operation vs the number of threads in Part 2 and in Part 1. Explain the difference.*/
-
+	The spinlocks have different results for two graphs. Spinlocks in part 1 increase as the number of threads increases, and spinlocks in part 2 decrease as the number of threads increases.
 
 --lists implementation:
 	We dynamically allocate an array of (sub)lists and two arrays of locks(m and s). 
@@ -63,11 +62,12 @@ Q 2.2
 
 Q 2.3
 
-	Explain the the change in performance of the synchronized methods as a function of the number of threads per list.
-	Explain why threads per list is a more interesting number than threads (for this particular measurement).
+	(a) Explain the the change in performance of the synchronized methods as a function of the number of threads per list.
 
-	From the graph we can see that time per operation is a lot greater when the number of list is less than number of threads. and smaller when the number of list is more than number of threads. This may be because that threads per ????????
-
+	From the graph we can see that time per operation is a lot greater when the number of list is less than number of threads. And smaller when the number of list is more than number of threads. This may be because that when #lists < #threads, some threads will have to wait for the others to acquire locks for a same sub-lists.(it's like the pigeonhole theory!). But when #lists > #threads, each list can be assigned to a specific thread such that all the operations on a sublist is all done by one assigned thread. There will be some threads that need to handle two or more lists, but no threads have to wait for another threads. 
+	
+	(b) Explain why threads per list is a more interesting number than threads (for this particular measurement).
+	If we use the number of threads to draw the graph, then we wouldn't find this cool behavior, therefore the ratio is a more interesting number.
 
 Q 3.1
 	(a). Why must the mutex be held when pthread_cond_wait is called?
