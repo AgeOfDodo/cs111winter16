@@ -6,6 +6,7 @@ action handler: change printf to write or whatever
 profile
  */
 
+#define _GNU_SOURCE
 #include <stdlib.h>
 #include <stdio.h>
 #include <getopt.h>
