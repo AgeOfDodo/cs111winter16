@@ -1,4 +1,5 @@
 // cs111 lab4 part 2
+#define _GNU_SOURCE
 
 #include <stdlib.h>
 #include <stdio.h>
