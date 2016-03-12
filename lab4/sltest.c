@@ -18,6 +18,7 @@
 #include <pthread.h>
 #include <time.h>
 #include "SortedList.h"
+#include <math.h>
 
 static pthread_mutex_t *mutex;
 static int* spinlock;
@@ -429,7 +430,11 @@ int main(int argc, char** argv){
     	// measure the time it takes to create thread
 		int ret = pthread_create(&thread_array[i], NULL, threadfunc, (void *) arg);  //to create thread
 		clock_gettime(CLOCK_MONOTONIC , &endtime_threads_create);
-		time_threads_create += endtime_threads_create.tv_nsec - starttime_threads_create.tv_nsec;
+	    long long startTime_ = (long long ) starttime_threads_create.tv_sec * pow(10,9) + starttime_threads_create.tv_nsec;
+    	long long endTime_ = (long long ) endtime_threads_create.tv_sec * pow(10,9) + endtime_threads_create.tv_nsec;
+		time_threads_create += endTime_ - startTime_;
+
+
 		// printf("time_threads = %d\n", time_threads_create);
 			if (ret != 0) { //error handling
 				fprintf(stderr, "Error creating thread %d\n", i);
@@ -473,12 +478,17 @@ int main(int argc, char** argv){
     	fprintf(stderr, "ERROR: final count = %d\n", counter);
     }
 
+    long long startTimel = (long long ) startTime.tv_sec * pow(10,9) + startTime.tv_nsec;
+    long long endTimel = (long long ) endTime.tv_sec * pow(10,9) + endTime.tv_nsec;
 
-    long long total_time = endTime.tv_nsec - startTime.tv_nsec;
+    long long total_time = endTimel - startTimel;
     printf("elapsed time: %d\n", total_time);
     printf("overhead time: %d\n", time_threads_create);
-    long long avg = (total_time - time_threads_create)/ num_ops;
+    // long long avg = (total_time - time_threads_create)/ num_ops;
+ 	long long avg = (total_time )/ num_ops;
+   
     printf("per operation: %d ns\n", avg);
+
 
 
 

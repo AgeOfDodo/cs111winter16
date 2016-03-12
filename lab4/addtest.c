@@ -24,6 +24,8 @@ profile
 #include <pthread.h>
 #include <time.h>
 
+#include <math.h>
+
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
 static long long counter = 0;
@@ -270,7 +272,11 @@ void add(long long *pointer, long long value) {
     }
 
 
-    long long total_time = endTime.tv_nsec - startTime.tv_nsec;
+    long long startTimel = (long long ) startTime.tv_sec * pow(10,9) + startTime.tv_nsec;
+    long long endTimel = (long long ) endTime.tv_sec * pow(10,9) + endTime.tv_nsec;
+
+
+    long long total_time = endTimel - startTimel;
     printf("elapsed time: %d\n", total_time);
 
     long long avg = total_time / num_ops;
