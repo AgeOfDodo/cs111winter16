@@ -1,0 +1,60 @@
+Name: Sunnie So
+UCLA ID: 704430286
+
+
+-------------------------------------------------------------------------------
+
+Response to Exercise 1:
+	Yes. Since each process has its own registers, the value of the each process' registers remains unchanged after a context switch. When the program executes schedule() again and switchs back to the original process, the original process' registers are copied to the "current" pid->p_registers and loaded to memory (look at run() in mpos-x86.c) After that, sys_getpid reads the value in %eax and return the correct pid.
+
+Explanation to Exercise 2 Implementation:
+	DO_FORK():
+	1. Use a loop to pick a process that is empty. If there is no empty process, then the function returns -1;
+	2. Copy the registers from parent to this child process.
+	3. Copy the stack of the parent process using copy_stack();
+	4. Change the child eax register to 0 because child process' do_fork() needs to return 0; 
+	5. Set this child process to P_RUNNABLE;
+
+	COPY_STACK()
+	1. Calculate top stack addresses using constant variable PROC1_STACK_ADDR, PROC_STACK_SIZE, and processes' pids.
+	2. Calculate dest bottom stack address. This is essentially subtracting destination's stakc top by the offset of src's bottom and src's stack top. 
+	3. Use memcpy to copy the memory of src's stack to dest's stack.
+	4. Set dest's esp to dest's bottom stack address.
+
+
+Explanation to Exercise 3 Implementation:
+	I add a "p_waiton" field in the process descripter structure (mpos-kern.h), which stores the process pid that the current process should wait on. p_waiton is used only when current process' p_state is set to P_BLOCKED. 
+	In INT_SYS_WAIT clause, I change the state of the process to P_BLOCKED so the process can not be called in schedule(). The process is unblocked when the waiton process exits. To implement this, I add a loop in INT_SYS_EXIT to check if there are any process that is waiting on the exiting process and changes the state of such process back to P_RUNNABLE. ALso, to change the waited processes' eax(return value) to the current exit status.
+
+
+Explanation to Exercise 4:
+	The bug is in INT_SYS_WAIT clause of interrupt(). It did not reap the zombie process. To reap it up, simply set the zombie process' state to P_EMPTY so it can be reused. 
+
+
+Anything else you'd like us to know:
+
+
+Extra credit exercises:
+
+Explanation to Exercise 6:
+	New declared: 
+	* Define INT_SYS_NEWTHREAD variable in mpos.h:14
+	* Declare and implement sys_newthread() in mpos-app.h:238
+	* Implement INT_SYS_NEWTHREAD clause in mpos-kern.c:234
+	* create_thread() in mpos-kern.c:410
+	* test case (now is bracketed with if(0)) in mpos-app.c:21
+	* exer6_test() test function in mpos-app.c:81
+	
+	For more details, please refer to the comments in the above code blocks.
+
+Explanation to Exercise 7:
+	New declared: 
+	* Define INT_SYS_KILL variable in mpos.h:13
+	* Declare and implement sys_kill() in mpos-app.h:210
+	* Implement INT_SYS_KILL clause in mpos-kern.c:206
+	* Call sys_kill in mpos-app2.c:68
+	Result:
+		the screen prints out "Process N lives" for even numbered pid processes. The count prints out up to 1024.
+
+	For more details, please refer to the comments in the above code blocks.
+
